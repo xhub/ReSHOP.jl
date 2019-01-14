@@ -1,0 +1,53 @@
+## Documentation: http://docs.travis-ci.com/user/languages/julia/
+language: julia
+os:
+  - linux
+  - osx
+#
+julia:
+  - 0.6
+  - 0.7
+  - 1.0
+
+#matrix:
+#    allow_failures:
+#        - julia: 0.7
+#        - julia: 1.0
+
+notifications:
+  email: false
+
+sudo: false
+
+#git:
+#  depth: 99999999
+
+## uncomment and modify the following lines to manually install system packages
+#addons:
+#  apt: # apt-get for linux
+#    packages:
+#    - gfortran
+#
+before_script: # homebrew for mac
+  - cd $HOME
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://d37drm4t2jghv5.cloudfront.net/distributions/25.1.3/linux/linux_x64_64_sfx.exe -O gams-install.exe; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://d37drm4t2jghv5.cloudfront.net/distributions/25.1.3/macosx/osx_x64_64_sfx.exe -O gams-install.exe; fi
+  - chmod +x gams-install.exe && ./gams-install.exe > /dev/null
+  - rm -f ./gams-install.exe
+  - mv gams* gams
+  - cd -
+
+env:
+  - PATH: $PATH:$HOME/gams
+
+## uncomment the following lines to override the default test script
+script:
+  - julia -e 'VERSION >= v"0.7" && import Pkg; Pkg.add("Compat")'
+  - julia -e 'using Compat.Pkg; Pkg.clone(pwd()); Pkg.build("JAMSDWriter"); Pkg.test("JAMSDWriter"; coverage=true)'
+
+after_success:
+  - echo $TRAVIS_JULIA_VERSION
+  # push coverage results to Coveralls
+  - julia -e 'using Compat.Pkg; cd(Pkg.dir("JAMSDWriter")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  # push coverage results to Codecov
+  - julia -e 'using Compat.Pkg; cd(Pkg.dir("JAMSDWriter")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
