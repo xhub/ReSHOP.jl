@@ -357,17 +357,17 @@ function reshop_add_box_var(ctx::Ptr{context}, lower::Cdouble, upper::Cdouble)
 end
 
 function reshop_add_free_var(ctx::Ptr{context}, nb)
-	res = ccall((:model_add_free_vars, libreshop), Cint, (Ptr{context}, Cuint), ctx, nb)
+	res = ccall((:model_add_free_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{Cvoid}), ctx, nb, C_NULL)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function reshop_add_neg_var(ctx::Ptr{context}, nb)
-	res = ccall((:model_add_neg_vars, libreshop), Cint, (Ptr{context}, Cuint), ctx, nb)
+	res = ccall((:model_add_neg_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{Cvoid}), ctx, nb, C_NULL)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function reshop_add_pos_var(ctx::Ptr{context}, nb)
-	res = ccall((:model_add_pos_vars, libreshop), Cint, (Ptr{context}, Cuint), ctx, nb)
+	res = ccall((:model_add_pos_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{Cvoid}), ctx, nb, C_NULL)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
