@@ -382,7 +382,7 @@ end
 
 function reshop_decl_eqn(ctx::Ptr{context}, idx)
 	minn = Ref{Cint}(-1)
-	res = ccall((:model_add_eqn_empty, libreshop), Cint, (Ptr{context}, Ref{Cint}, Ptr{Cvoid}, Cchar, Cchar), ctx, minn, C_NULL, 2, 0)
+	res = ccall((:myo_add_equation, libreshop), Cint, (Ptr{context}, Ref{Cint}), ctx, minn)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
