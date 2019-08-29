@@ -18,6 +18,12 @@ environment:
     - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/1.0/julia-1.0-latest-win64.exe"
       GAMS_URL: "https://d37drm4t2jghv5.cloudfront.net/distributions/25.1.2/windows/windows_x64_64.exe"
 
+    - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/1.2/julia-1.2-latest-win32.exe"
+      GAMS_URL: "https://d37drm4t2jghv5.cloudfront.net/distributions/25.1.2/windows/windows_x86_32.exe"
+
+    - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/1.2/julia-1.2-latest-win64.exe"
+      GAMS_URL: "https://d37drm4t2jghv5.cloudfront.net/distributions/25.1.2/windows/windows_x64_64.exe"
+
   PATH: 'C:\projects\gams;%PATH%'
 
 ## uncomment the following lines to allow failures on nightly julia
