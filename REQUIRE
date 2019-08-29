@@ -3,3 +3,4 @@ JuMP 0.18 0.19-
 MathProgBase
 Nullables
 Compat 1.0.0
+Bindeps
