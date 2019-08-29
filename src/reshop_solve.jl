@@ -21,13 +21,13 @@ function reshop_set_modeltype(ctx::Ptr{context}, model_type)
     res != 0 && error("return code $res from ReSHOP")
 end
 
-# TODO(xhub) reimplement writemodel using CONVERTD
-function reshop_solve(ctx::Ptr{context}, ctx_dest::Ptr{context}, solver_name::String, emp::Ptr{empinfo}=Ptr{empinfo}(C_NULL))
+
+function reshop_solve(mdl::Ptr{reshop_model}, mdl_solver::Ptr{reshop_model}, ctx_dest::Ptr{context}, solver_name::String)
 
     CONFIG[:solver_log] && hack_solver_log()
 
-    if emp != C_NULL
-        res = ccall((:reshop_transform, libreshop), Cint, (Ptr{empinfo}, Ptr{context}), emp, ctx_dest)
+    if true
+        res = ccall((:reshop_transform, libreshop), Cint, (Ptr{reshop_model}, Ptr{reshop_model}), mdl, mdl_solver)
         res != 0 && error("return code $res from ReSHOP")
 
         if CONFIG[:export_gms]
@@ -38,25 +38,17 @@ function reshop_solve(ctx::Ptr{context}, ctx_dest::Ptr{context}, solver_name::St
 
         ccall((:gams_set_solverstr, libreshop), Cint, (Ptr{ReSHOP.context}, Cstring), ctx_dest, solver_name)
 
-        res = ccall((:reshop_solve, libreshop), Cint, (Ptr{empinfo},), emp)
-        return res
+        res = ccall((:reshop_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
     else
-        res = ccall((:model_compress, libreshop), Cint, (Ptr{context}, Ptr{context}, Ptr{empinfo}, Ptr{Cvoid}), ctx, ctx_dest, emp, C_NULL)
+        res = ccall((:model_compress, libreshop), Cint, (Ptr{reshop_model}, Ptr{reshop_model}, Ptr{Cvoid}), mdl, mdl_solver, C_NULL)
         res != 0 && error("return code $res from ReSHOP")
         res = ccall((:ctx_exportmodel, libreshop), Cint, (Ptr{context}, Ptr{context}), ctx, ctx_dest)
         res != 0 && error("return code $res from ReSHOP")
 
-        if CONFIG[:export_gms]
-#            ccall((:ctx_writemodel, libreshop), Cint, (Ptr{context}, Cstring), ctx_dest, "validation.gms")
-            ccall((:gams_set_solverstr, libreshop), Cint, (Ptr{context}, Cstring), ctx_dest, "CONVERTD")
-            ccall((:ctx_callsolver, libreshop), Cint, (Ptr{context},), ctx_dest)
-        end
-
-        # switch back to the default solver
-        ccall((:gams_set_solverstr, libreshop), Cint, (Ptr{ReSHOP.context}, Cstring), ctx_dest, solver_name)
-
-        return ccall((:ctx_callsolver, libreshop), Cint, (Ptr{context},), ctx_dest)
+        res = ccall((:ctx_callsolver, libreshop), Cint, (Ptr{context},), ctx_dest)
     end
+
+    return res
 end
 
 function reshop_setup_gams()

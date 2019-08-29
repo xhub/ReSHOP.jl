@@ -4,13 +4,13 @@ end
 mutable struct context
 end
 
-mutable struct empinfo
-end
-
 mutable struct equtree
 end
 
 mutable struct equnode
+end
+
+mutable struct reshop_model
 end
 
 mutable struct reshop_var
@@ -85,12 +85,12 @@ function ctx_setvarnames(ctx, names::Vector{String})
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function hack_last_vidx(ctx)
+function hack_last_vidx(ctx::Ptr{context})
 	return ccall((:model_total_n, libreshop), Csize_t, (Ptr{context},), ctx) - 1
 end
 
-function hack_exportempinfo(ctx, ctx_mtr, emp)
-	res = ccall((:hack_exportempinfo, libreshop), Cint, (Ptr{context}, Ptr{context}, Ptr{empinfo}), ctx, ctx_mtr, emp)
+function hack_exportempinfo(ctx_gms::Ptr{context}, mdl::Ptr{reshop_model})
+	res = ccall((:hack_exportempinfo, libreshop), Cint, (Ptr{context}, Ptr{reshop_model}), ctx_gms, mdl)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -136,16 +136,8 @@ function ctx_getmultiplierval(ctx::Ptr{context}, idx)
 	return val.x
 end
 
-function emp_create(ctx)
-	return ccall((:empinfo_alloc, libreshop), Ptr{empinfo}, (Ptr{context},), ctx)
-end
-
 function emp_create_equil(max_mp)
 	return ccall((:mp_equil_alloc, libreshop), Ptr{equil}, (Cuint,), max_mp)
-end
-
-function emp_delete(emp::Ptr{empinfo})
-	return ccall((:hack_empinfo_dealloc, libreshop), Cvoid, (Ptr{empinfo},), emp)
 end
 
 function emp_add_mp_mp(mp_parent, mp)
@@ -160,7 +152,7 @@ end
 
 function emp_add_equil(emp)
 	mpe = Ref{Ptr{equil}}(C_NULL)
-	res = ccall((:empinfo_add_equil, libreshop), Cint, (Ptr{empinfo}, Ref{Ptr{equil}}), emp, mpe)
+	res = ccall((:reshop_add_equil, libreshop), Cint, (Ptr{reshop_model}, Ref{Ptr{equil}}), mdl, mpe)
 	res != 0 && error("return code $res from ReSHOP")
 
 	return mpe.x
@@ -171,18 +163,13 @@ function emp_equil_add(mpe, mp)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_hack(emp)
-	res = ccall((:hack_ag_addfinish, libreshop), Cint, (Ptr{empinfo},), emp)
+function emp_mp_ensure(mdl::Ptr{reshop_model}, nb)
+	res = ccall((:reshop_ensure_mp, libreshop), Cint, (Ptr{reshop_model}, Cuint), emp, nb)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_mp_ensure(emp, nb)
-	res = ccall((:empinfo_ensure, libreshop), Cint, (Ptr{empinfo}, Cuint), emp, nb)
-	res != 0 && error("return code $res from ReSHOP")
-end
-
-function emp_mp_alloc(emp, ctx)
-	mp = ccall((:mathprgm_alloc, libreshop), Ptr{mathprgm}, (Ptr{empinfo}, Ptr{context}), emp, ctx)
+function emp_mp_alloc(mdl::Ptr{reshop_model})
+	mp = ccall((:mathprgm_alloc, libreshop), Ptr{mathprgm}, (Ptr{reshop_model},), mdl)
 	return mp
 end
 
@@ -232,31 +219,27 @@ end
 function emp_mp_print(mp, ctx)
 	ccall((:mathprgm_print, libreshop), Cint, (Ptr{mathprgm}, Ptr{context}), mp, ctx)
 end
-#function emp_mp_to_agent(ctx, emp)
-#	res = ccall((:mathprgm_to_agent, libreshop), Cint, (Ptr{context}, Ptr{empinfo}), ctx, emp)
-#	res != 0 && error("return code $res from ReSHOP")
-#end
 
-function emp_report_values(emp, ctx)
-	res = ccall((:reshop_report_values, libreshop), Cint, (Ptr{empinfo}, Ptr{context}), emp, ctx)
+function reshop_report_values(mdl_solver::Ptr{reshop_model}, mdl::Ptr{reshop_model})
+	res = ccall((:reshop_report_values, libreshop), Cint, (Ptr{reshop_model}, Ptr{reshop_model}), mdl_solver, mdl)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_set_root(emp, mpe::Ptr{equil})
-	res = ccall((:empinfo_set_emproot_mpe, libreshop), Cint, (Ptr{empinfo}, Ptr{equil}), emp, mpe)
+function emp_set_root(mdl::Ptr{reshop_model}, mpe::Ptr{equil})
+	res = ccall((:reshop_set_emproot_mpe, libreshop), Cint, (Ptr{reshop_model}, Ptr{equil}), mdl, mpe)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_set_root(emp, mp::Ptr{mathprgm})
-	res = ccall((:empinfo_set_emproot_mp, libreshop), Cint, (Ptr{empinfo}, Ptr{mathprgm}), emp, mp)
+function emp_set_root(mdl::Ptr{reshop_model}, mp::Ptr{mathprgm})
+	res = ccall((:reshop_set_emproot_mp, libreshop), Cint, (Ptr{reshop_model}, Ptr{mathprgm}), mdl, mp)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_ovf(emp, name, ovf_vidx, args)
+function emp_ovf(mdl, name, ovf_vidx, args)
 	ovf_def = Ref{Ptr{ovf_definition}}(C_NULL)
 	args_var = reshop_avar(length(args), args)
-	res = ccall((:ovf_add, libreshop), Cint, (Ptr{empinfo}, Cstring, Cint, Ptr{abstract_var}, Ref{Ptr{ovf_definition}}),
-							                               emp, name, ovf_vidx, args_var, ovf_def)
+	res = ccall((:ovf_add, libreshop), Cint, (Ptr{reshop_model}, Cstring, Cint, Ptr{abstract_var}, Ref{Ptr{ovf_definition}}),
+							                              mdl, name, ovf_vidx, args_var, ovf_def)
 	res != 0 && error("return code $res from ReSHOP")
 	reshop_avar_free(args_var)
 	return ovf_def.x
@@ -356,19 +339,31 @@ function reshop_add_box_var(ctx::Ptr{context}, lower::Cdouble, upper::Cdouble)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function reshop_add_free_var(ctx::Ptr{context}, nb)
-	res = ccall((:model_add_free_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{Cvoid}), ctx, nb, C_NULL)
+function reshop_add_free_var(ctx::Ptr{context}, nb, avar::Ptr{abstract_var}=Ptr{abstract_var}(C_NULL))
+	res = ccall((:model_add_free_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{abstract_var}), ctx, nb, avar)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function reshop_add_neg_var(ctx::Ptr{context}, nb)
-	res = ccall((:model_add_neg_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{Cvoid}), ctx, nb, C_NULL)
+function reshop_add_neg_var(ctx::Ptr{context}, nb, avar::Ptr{abstract_var}=Ptr{abstract_var}(C_NULL))
+	res = ccall((:model_add_neg_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{abstract_var}), ctx, nb, avar)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function reshop_add_pos_var(ctx::Ptr{context}, nb)
-	res = ccall((:model_add_pos_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{Cvoid}), ctx, nb, C_NULL)
+function reshop_add_pos_var(ctx::Ptr{context}, nb, avar::Ptr{abstract_var}=Ptr{abstract_var}(C_NULL))
+	res = ccall((:model_add_pos_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{abstract_var}), ctx, nb, avar)
 	res != 0 && error("return code $res from ReSHOP")
+end
+
+function reshop_alloc(ctx::Ptr{context})
+	return ccall((:reshop_alloc, libreshop), Ptr{reshop_model}, (Ptr{context},), ctx)
+end
+
+function reshop_free(mdl::Ptr{reshop_model})
+	return ccall((:reshop_free, libreshop), Cvoid, (Ref{Ptr{reshop_model}},), mdl)
+end
+
+function reshop_avar()
+  return ccall((:avar_alloc, libreshop), Ptr{abstract_var}, ())
 end
 
 function reshop_avar(size, indices)
@@ -378,6 +373,13 @@ end
 
 function reshop_avar_free(avar::Ptr{abstract_var})
 	return ccall((:avar_free, libreshop), Cvoid, (Ptr{abstract_var},), avar)
+end
+
+function reshop_avar_get(avar::Ptr{abstract_var}, i::UInt32)
+	vidx = Ref{Cint}(-1)
+	res = ccall((:avar_get, libreshop), Cvoid, (Ptr{abstract_var}, Cuint, Ref{Cint}), avar, i, vidx)
+	res != 0 && error("return code $res from ReSHOP")
+	return vidx.x
 end
 
 function reshop_decl_eqn(ctx::Ptr{context}, idx)

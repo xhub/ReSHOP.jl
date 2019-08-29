@@ -10,11 +10,11 @@ function reshop_set_mathprgm_modeltype(m::ReSHOPMathProgModel, idx)
 #    end
 end
 
-function reshop_declare_mathprgm(mp, ctx::Ptr{context}, emp::Ptr{empinfo})
+function reshop_declare_mathprgm(mp, mdl::Ptr{reshop_model})
     # TODO(xhub) that is JuMP-specific
     m = mp.emp.model_ds.internalModel.inner
 
-    reshop_mp = emp_mp_alloc(emp, ctx)
+    reshop_mp = emp_mp_alloc(mdl)
 
     CONFIG[:debug] && println("DEBUG: reshop_declare_mathprgm: tackling MP sense = $(mp.sense) objequ = $(mp.objequ) equs = $(mp.equs) vars = $(mp.vars)")
 

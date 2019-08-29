@@ -173,6 +173,8 @@ mutable struct ReSHOPMathProgModel <: MPB.AbstractMathProgModel
 
     reshop_ctx::Ptr{context}
     reshop_ctx_dest::Ptr{context}
+    reshop_mdl::Ptr{reshop_model}
+    reshop_mdl_solver::Ptr{reshop_model}
     reshop_options::Ptr{reshop_options}
     gams_dir::String
 
@@ -223,6 +225,8 @@ mutable struct ReSHOPMathProgModel <: MPB.AbstractMathProgModel
             Nullable{MPB.AbstractNLPEvaluator}(),
             Ptr{context}(C_NULL),
             Ptr{context}(C_NULL),
+            Ptr{reshop_model}(C_NULL),
+            Ptr{reshop_model}(C_NULL),
             Ptr{reshop_options}(C_NULL),
             "")
         @compat finalizer(reshop_cleanup, o)
@@ -462,6 +466,7 @@ function optimize!(m::ReSHOPMathProgModel)
 
     m.reshop_options = reshop_options_set(m.options)
 
+    # TODO(Xhub) this hack has to go.
     if m.emp.hasvalue
        return m.emp.value()
     end
@@ -476,7 +481,9 @@ function optimize!(m::ReSHOPMathProgModel)
     # Solve via gams for now
     m.reshop_ctx_dest, m.gams_dir = reshop_setup_gams()
 
-    m.solve_exitcode = reshop_solve(m.reshop_ctx, m.reshop_ctx_dest, m.solver_name)
+    m.reshop_mdl = reshop_alloc(m.reshop_ctx)
+    m.reshop_mdl_solver = reshop_alloc(m.reshop_ctx_dest)
+    m.solve_exitcode = reshop_solve(m.reshop_mdl, m.reshop_mdl_solver, m.reshop_ctx_dest, m.solver_name)
 
 #    ccall((:print_model, libreshop), Cint, (Ptr{context},), m.reshop_ctx)
     m.solve_time = time() - t
@@ -730,10 +737,10 @@ function report_results_common(m::ReSHOPMathProgModel)
     ###########################################################################
 
     tmpCint = Ref{Cint}(0)
-    res = ccall((:ctx_getsolvestat, libreshop), Cint, (Ptr{context}, Ref{Cint}), m.reshop_ctx_dest, tmpCint)
+    res = ccall((:ctx_getsolvestat, libreshop), Cint, (Ptr{context}, Ref{Cint}), m.reshop_ctx, tmpCint)
     res != 0 && error("return code $res from ReSHOP")
     m.solve_result_num = tmpCint.x
-    m.solve_result = unsafe_string(ccall((:ctx_getsolvestattxt, libreshop), Cstring, (Ptr{context}, Cint), m.reshop_ctx_dest, m.solve_result_num))
+    m.solve_result = unsafe_string(ccall((:ctx_getsolvestattxt, libreshop), Cstring, (Ptr{context}, Cint), m.reshop_ctx, m.solve_result_num))
 
     res = ccall((:ctx_getmodelstat, libreshop), Cint, (Ptr{context}, Ref{Cint}), m.reshop_ctx_dest, tmpCint)
     res != 0 && error("return code $res from ReSHOP")
@@ -797,8 +804,9 @@ function report_results_common(m::ReSHOPMathProgModel)
 
 function report_results(m::ReSHOPMathProgModel)
     # TODO(Xhub) fix this hack
-    res = ccall((:model_eval_eqns, libreshop), Cint, (Ptr{context}, Ptr{context}), m.reshop_ctx, m.reshop_ctx_dest)
-    res != 0 && error("ReSHOP: error code $res")
+    reshop_report_values(m.reshop_mdl_solver, m.reshop_mdl)
+#    res = ccall((:model_eval_eqns, libreshop), Cint, (Ptr{context}, Ptr{context}), m.reshop_ctx, m.reshop_ctx_dest)
+    #res != 0 && error("ReSHOP: error code $res")
 
     # Next, read for the variable values
     report_results_common(m)
@@ -898,10 +906,13 @@ include("reshop_mathprgm.jl")
 include("reshop_ovf.jl")
 include("reshop_solve.jl")
 
+# Deallocate the data
 function reshop_cleanup(o::ReSHOPMathProgModel)
     ctx_dealloc(o.reshop_ctx)
     ctx_dealloc(o.reshop_ctx_dest)
     reshop_options_dealloc(o.reshop_options)
+    reshop_free(o.reshop_mdl)
+    reshop_free(o.reshop_mdl_solver)
     if (!isempty(o.gams_dir))
         try
             rm(o.gams_dir, recursive=true, force=true)
@@ -926,3 +937,5 @@ function reshop_setemp!(m::ReSHOPSolver, emp)
 end
 
 end
+
+
