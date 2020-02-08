@@ -19,7 +19,7 @@ const func_to_reshop = Dict(
 :erf => (18,1),
 # (dunfm),
 # (dnorm),
-:^ => (21,2), #power
+#:^ => (21,2), #power
 # (jdate),
 # (jtime),
 # (jstart),
@@ -116,14 +116,35 @@ const func_to_reshop = Dict(
 const sense_to_reshop = Dict(
 :Min => 0,
 :Max => 1,
+MOI.MIN_SENSE => 0,
+MOI.MAX_SENSE => 1,
+MOI.FEASIBILITY_SENSE => 0, # TODO(xhub) improve
+)
+
+const reshop_sense_to_moi = Dict(
+0 => MOI.MIN_SENSE,
+1 => MOI.MAX_SENSE,
 )
 
 const relation_to_reshop = Dict(
 :multiple => -1,
-:<=       => 2,
-:>=       => 1,
-:(==)     => 4,
-'='       => 4,
+:<=       => RHP_CONE_R_MINUS,
+:>=       => RHP_CONE_R_PLUS,
+:(==)     => RHP_CONE_0,
+'='       => RHP_CONE_0,
+)
+const set_to_reshop = Dict(
+MOI.Nonnegatives         => RHP_CONE_R_PLUS,
+MOI.Nonpositives         => RHP_CONE_R_MINUS,
+MOI.Zeros                => RHP_CONE_0,
+MOI.SecondOrderCone      => RHP_CONE_SOC,
+MOI.EqualTo{Float64}     => RHP_CONE_0,
+MOI.GreaterThan{Float64} => RHP_CONE_R_PLUS,
+MOI.LessThan{Float64}    => RHP_CONE_R_MINUS,
+MOI.SOS1{Float64}        => RHP_VARTYPE_S1,
+MOI.SOS2{Float64}        => RHP_VARTYPE_S2,
+MOI.ZeroOne              => RHP_VARTYPE_B,
+MOI.Integer              => RHP_VARTYPE_I,
 )
 
 const quad_relation_sense = Dict(
@@ -157,3 +178,9 @@ const nary_functions = Set{Symbol}([
 # :or_n,
 # :alldiff,
 ])
+const reshop_option_type = Dict(
+  RHP_Double   => (:option_get_d, Cdouble),
+  RHP_Integer  => (:option_get_i, Cint),
+  RHP_Boolean  => (:option_get_b, Cuint),  # This is hack to get the type system to work for us
+  RHP_String   => (:option_get_s, Cstring)
+ )

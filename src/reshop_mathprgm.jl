@@ -1,4 +1,4 @@
-function reshop_set_mathprgm_modeltype(m::ReSHOPMathProgModel, idx)
+function reshop_set_mathprgm_modeltype(m::ReSHOPMathProgBaseModel, idx)
     error("to implement")
 #    discrete = any((m.vartypes .== :Int) + (m.vartypes .== :Bin) .> 0)
 #    if discrete

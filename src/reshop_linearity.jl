@@ -4,6 +4,14 @@ mutable struct LinearityExpr
     coeff::Float64
 end
 
+function getvidx(vidx::Int)
+   return vidx
+end
+
+function getvidx(vidx::MOI.VariableIndex)
+   return vidx.value
+end
+
 LinearityExpr(c, linearity) = LinearityExpr(c, linearity, 1)
 
 eval(c::LinearityExpr) = eval(get_expr(c))
@@ -128,7 +136,7 @@ function pull_up_constants(c::LinearityExpr)
     return c
 end
 
-function prune_linear_terms!(c::LinearityExpr, lin_constr::Dict{Int, Float64},
+function prune_linear_terms!(c::LinearityExpr, lin_constr::Dict{Int32, Float64},
                              constant::Float64=0.0, negative_tree::Bool=false)
     if c.linearity != :nonlinear
         constant = add_linear_tree!(c, lin_constr, constant, negative_tree)
@@ -169,7 +177,7 @@ function prune_linear_terms!(c::LinearityExpr, lin_constr::Dict{Int, Float64},
     end
 end
 
-function add_linear_tree!(c::LinearityExpr, lin_constr::Dict{Int, Float64},
+function add_linear_tree!(c::LinearityExpr, lin_constr::Dict{Int32, Float64},
                           constant::Float64=0.0, negative_tree::Bool=false)
     c = collate_linear_terms(c)
     negative_tree && negate(c)
@@ -224,7 +232,7 @@ function multiply(c::LinearityExpr, a::Real)
     return c
 end
 
-function add_tree_to_constr!(c::LinearityExpr, lin_constr::Dict{Int, Float64},
+function add_tree_to_constr!(c::LinearityExpr, lin_constr::Dict{Int32, Float64},
                              constant::Float64)
     if isa(c.c, Expr) && c.c.head == :call
         @assert c.c.args[1] == :+
@@ -234,7 +242,7 @@ function add_tree_to_constr!(c::LinearityExpr, lin_constr::Dict{Int, Float64},
     elseif c.linearity == :const
         constant += c.c
     else
-        lin_constr[c.c.args[2]] += c.coeff
+        lin_constr[getvidx(c.c.args[2])] += c.coeff
     end
     return constant
 end

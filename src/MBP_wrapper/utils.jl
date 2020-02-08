@@ -1,4 +1,4 @@
-function reshop_reg_eqns(ctx, m::ReSHOPMathProgModel, equil=false)
+function reshop_reg_eqns(ctx, m::ReSHOPMathProgBaseModel, equil=false)
     if has_objective(m)
         obj_offset = 1
     else
@@ -30,7 +30,7 @@ function reshop_reg_eqns(ctx, m::ReSHOPMathProgModel, equil=false)
 end
 
 
-function create_reshop_ctx(m::ReSHOPMathProgModel)
+function create_reshop_ctx(m::ReSHOPMathProgBaseModel)
     # Not all model have an objective function
     if has_objective(m)
         obj_offset = 1
@@ -48,7 +48,7 @@ function create_reshop_ctx(m::ReSHOPMathProgModel)
     return ctx
 end
 
-function has_objective(m::ReSHOPMathProgModel)
+function has_objective(m::ReSHOPMathProgBaseModel)
     CONFIG[:debug] && println("DEBUG: has_objective $(m.lin_obj) $(m.obj) $(m.quad_obj)")
     res = !isempty(m.lin_obj) || (isa(m.obj, Expr)) || length(m.quad_obj) == 3
     if !res return res end
@@ -57,7 +57,7 @@ function has_objective(m::ReSHOPMathProgModel)
 end
 
 # Nonlinear constraint trees
-function reshop_add_cons_nl(ctx, m::ReSHOPMathProgModel, offset)
+function reshop_add_cons_nl(ctx, m::ReSHOPMathProgBaseModel, offset)
     for idx in 1:m.ncon
         if isa(m.constrs[idx], Expr) && (m.constrs[idx] != 0.)
             eidx = m.nonquad_idx[idx] + offset - 1 + m.offset
@@ -68,7 +68,7 @@ function reshop_add_cons_nl(ctx, m::ReSHOPMathProgModel, offset)
     end
 end
 
-function reshop_quad(ctx, m::ReSHOPMathProgModel, idx, equ, offset, isObj::Bool=false)
+function reshop_quad(ctx, m::ReSHOPMathProgBaseModel, idx, equ, offset, isObj::Bool=false)
     ##########################################################################
     #
     ##########################################################################
@@ -148,7 +148,7 @@ function reshop_quad(ctx, m::ReSHOPMathProgModel, idx, equ, offset, isObj::Bool=
         CONFIG[:debug] && println("DEBUG: in reshop_quad, qidxS = $qidxS; qval= $qvals")
         abs_var = reshop_avar(length(qidxS), collect(qidxS) .- 1)
         CONFIG[:debug] && println("DEBUG: in reshop_quad, quad var $(collect(qidxS)) with value $qvals")
-        reshop_equ_add_lin_tree(ctx, eidx, qvals, abs_var, 1.)
+        rhp_equ_add_lin_tree(ctx, eidx, qvals, abs_var, 1.)
         reshop_avar_free(abs_var)
     end
 
@@ -169,13 +169,13 @@ function reshop_quad(ctx, m::ReSHOPMathProgModel, idx, equ, offset, isObj::Bool=
             c = 2.
         end
         # the coeff is 2 since this function adds .5 x^TMx
-        reshop_equ_add_quadratic(ctx, eidx, mat, avar, c)
+        rhp_equ_add_quadratic(ctx, eidx, mat, avar, c)
         reshop_avar_free(avar)
         reshop_mat_free(mat)
     end
 end
 
-function reshop_add_obj_quad(ctx, m::ReSHOPMathProgModel)
+function reshop_add_obj_quad(ctx, m::ReSHOPMathProgBaseModel)
     CONFIG[:debug] && println("DEBUG: quad_obj = $(m.quad_obj)")
     if length(m.quad_obj) == 3
         rowidx = m.quad_obj[1]
@@ -189,14 +189,14 @@ function reshop_add_obj_quad(ctx, m::ReSHOPMathProgModel)
     end
 end
 
-function reshop_add_cons_quad(ctx, m::ReSHOPMathProgModel, offset)
+function reshop_add_cons_quad(ctx, m::ReSHOPMathProgBaseModel, offset)
     for (idx, equ) in enumerate(m.quad_equs)
         reshop_quad(ctx, m, idx, equ, offset)
     end
 end
 
 # Nonlinear objective tree
-function reshop_add_obj_nl(ctx, m::ReSHOPMathProgModel)
+function reshop_add_obj_nl(ctx, m::ReSHOPMathProgBaseModel)
     # Get tree, node, ...
     if m.obj != 0.
         tree, node = reshop_get_treedata(ctx, m.offset)
@@ -206,16 +206,16 @@ function reshop_add_obj_nl(ctx, m::ReSHOPMathProgModel)
 end
 
 # Initial primal guesses
-function reshop_add_var_guess(ctx, m::ReSHOPMathProgModel)
+function reshop_add_var_guess(ctx, m::ReSHOPMathProgBaseModel)
     for idx in 0:(m.nvar - 1)
         i = m.v_index_map_rev[idx]
         CONFIG[:debug] && println("Setting level value variable $i to $(m.x_0[i])")
-        ctx_setvarlone(ctx, idx, m.x_0[i])
+        ctx_setvarval(ctx, idx, m.x_0[i])
     end
 end
 
 # Constraint bounds
-function reshop_add_contraint_sense(ctx, m::ReSHOPMathProgModel, offset)
+function reshop_add_contraint_sense(ctx, m::ReSHOPMathProgBaseModel, offset)
     for idx in 1:m.ncon
         lower = m.g_l[idx]
         upper = m.g_u[idx]
@@ -284,7 +284,7 @@ function reshop_declare_var(ctx, vtype, lower, upper)
 end
 
 # Variable bounds
-function reshop_declare_vars(ctx, m::ReSHOPMathProgModel)
+function reshop_declare_vars(ctx, m::ReSHOPMathProgBaseModel)
     for idx in 0:(m.nvar - 1)
         i = m.v_index_map_rev[idx]
         lower = m.x_l[i]
@@ -300,7 +300,7 @@ end
 
 # Jacobian counts
 # TODO(xhub) resuse this to prealloc the model_repr?
-#function write_nl_k_block(f, m::ReSHOPMathProgModel)
+#function write_nl_k_block(f, m::ReSHOPMathProgBaseModel)
 #    println(f, "k$(m.nvar - 1)")
 #    total = 0
 #    for index = 0:(m.nvar - 2)
@@ -310,7 +310,7 @@ end
 #    end
 #end
 
-function reshop_declare_eqns(ctx, m::ReSHOPMathProgModel, equil=false)
+function reshop_declare_eqns(ctx, m::ReSHOPMathProgBaseModel, equil=false)
     if has_objective(m)
         cor = 0
     else
@@ -318,18 +318,18 @@ function reshop_declare_eqns(ctx, m::ReSHOPMathProgModel, equil=false)
     end
 
     for idx in 0:m.ncon+cor+length(m.quad_equs)
-        reshop_decl_eqn(ctx, idx+m.offset)
+        reshop_decl_eqn(ctx)
     end
     if equil || !has_objective(m)
-        reshop_set_objeqn(ctx, -1)
+        rhp_set_objeqn(ctx, -1)
     else
-        reshop_set_objeqn(ctx, 0)
+        rhp_set_objeqn(ctx, 0)
     end
 #    return m.ncon+cor+length(m.quad_equs)
 end
 
 # Linear constraint expressions
-function reshop_add_cons_lin(ctx, m::ReSHOPMathProgModel, offset)
+function reshop_add_cons_lin(ctx, m::ReSHOPMathProgBaseModel, offset)
     for idx in 1:m.ncon
         num_vars = length(m.lin_constrs[idx])
         if num_vars > 0
@@ -346,7 +346,7 @@ function reshop_add_cons_lin(ctx, m::ReSHOPMathProgModel, offset)
 end
 
 # Linear objective expression
-function reshop_add_obj_lin(ctx, m::ReSHOPMathProgModel)
+function reshop_add_obj_lin(ctx, m::ReSHOPMathProgBaseModel)
     for (k,v) in m.lin_obj
         if abs(v) > 0.
             ctx_add_lin_var(ctx, m.offset, m.v_index_map[k], v)
@@ -354,80 +354,21 @@ function reshop_add_obj_lin(ctx, m::ReSHOPMathProgModel)
     end
 end
 
-function reshop_add_quad_lin(ctx, m::ReSHOPMathProgModel)
+function reshop_add_quad_lin(ctx, m::ReSHOPMathProgBaseModel)
 end
 
 
-##############################################################################
-# Low level functions
-##############################################################################
-
-function write_arithm_op(ctx, tree, node, m, fn, args)
-    # TODO(xhub) implement better management of variable/constant base
-    len = length(args)
-    equtree_arithm(tree, node, arithm_ops[fn], len)
-    pnode = equnode_deref(node)
-    for i in 0:(len-1)
-        child = equnode_get_child_addr(pnode, i)
-        reshop_add_nlexpr(ctx, tree, child, m, args[len-i])
-    end
-end
-
-
-# Convert an expression tree
-reshop_add_nlexpr(ctx, tree, node, m, c) = error("Unrecognized expression $c")
-# Handle numerical constants e.g. pi
-reshop_add_nlexpr(ctx, tree, node, m, c::Symbol) =  reshop_add_nlexpr(ctx, tree, node, m, float(eval(c)))
-
-# write down constant
-function reshop_add_nlexpr(ctx, tree, node, m, c::Real)
-#    if abs(c) > 0.
-        equtree_cst(ctx, tree, node, c)
-#    end
-end
-
-reshop_add_nlexpr(ctx, tree, node, m, c::LinearityExpr) = reshop_add_nlexpr(ctx, tree, node, m, c.c)
-function reshop_add_nlexpr(ctx, tree, node, m, c::Expr)
-    CONFIG[:debug] && println("DEBUG: encoding expr $c")
-    if c.head == :ref
-        CONFIG[:debug] && println("DEBUG: variable case: $c")
-        # This is a variable
-        if c.args[1] == :x
-            @assert isa(c.args[2], Int)
-            equtree_var(ctx, tree, node, m.v_index_map[c.args[2]], 1.)
-        else
-            error("Unrecognized reference expression $c")
+function reshop_set_modeltype(m::ReSHOPMathProgBaseModel)
+    discrete = any((m.vartypes .== :Int) + (m.vartypes .== :Bin) .> 0)
+    if discrete
+        if m.model_type == qcp
+            m.model_type = miqcp
+        elseif m.model_type == nlp
+             m.model_type = minlp
         end
-    elseif c.head == :call
-        if c.args[1] in keys(arithm_ops)
-            write_arithm_op(ctx, tree, node, m, c.args[1], c.args[2:end])
-        elseif c.args[1] == :neg
-            equtree_umin(ctx, tree, node)
-            reshop_add_nlexpr(ctx, tree, node, m, c.args[2])
-        # TODO(xhub) support nary_functions
-        elseif c.args[1] in nary_functions
-            error("Unsupported n-ary function $(c.args[1])")
-        else
-            equtree_call(ctx, tree, node, func_to_reshop[c.args[1]])
-            len = length(c.args)
-            pnode = equnode_deref(node)
-
-            for i in 0:(len - 2)
-                child = equnode_get_child_addr(pnode, i)
-                reshop_add_nlexpr(ctx, tree, child, m, c.args[i+2])
-            end
-        end
-
-    elseif c.head == :comparison
-        # .nl only handles binary comparison
-        @assert length(c.args) == 3
-        # Output comparison type first, followed by args
-        CONFIG[:debug] && println(f, nl_operator(c.args[2]))
-        map(arg -> reshop_add_nlexpr(ctx, tree, node, m, arg), c.args[1:2:end])
-
-    elseif c.head in [:&&, :||]
-        error("unsupported binary condition")
-    else
-        error("Unrecognized expression $c")
     end
+    reshop_set_objsense(m.reshop_ctx, m.sense)
+    reshop_set_modeltype(m.reshop_ctx, m.model_type)
 end
+
+

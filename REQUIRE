@@ -1,5 +1,6 @@
 julia 0.6
-JuMP 0.18 0.19-
+JuMP
+MathOptInterface 0.9
 MathProgBase
 Nullables
 Compat 1.0.0
