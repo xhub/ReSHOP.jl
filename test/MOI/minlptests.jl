@@ -56,6 +56,8 @@ const PRIMAL_TARGET_LOCAL = Dict(
             "005_010",
             "005_011",  # Uses the function `\`
             "006_010",  # handling of user-defined functions.
+            "007_010",  # Not consistent across solver version
+            "007_020",  # Not consistent across solver version
         ], termination_target=TERMINATION_TARGET_LOCAL, primal_target=PRIMAL_TARGET_LOCAL)
         MINLPTests.test_nlp_mi_cvx(solver)
     end
