@@ -9,7 +9,7 @@ function MOI.get(model::Optimizer, ::MOI.TerminationStatus)
     if solver_code == :Optimal
         if model_code == :OptimalGlobal
             return MOI.OPTIMAL
-        elseif model_code == :OptimalLocal
+        elseif model_code == :OptimalLocal || model_code == :Feasible
             return MOI.LOCALLY_SOLVED
         elseif model_code == :Unbounded
             return MOI.INFEASIBLE_OR_UNBOUNDED
@@ -90,7 +90,7 @@ function MOI.get(model::Optimizer, ::MOI.PrimalStatus)
     if solver_code == :Optimal
         if model_code == :OptimalGlobal
             return MOI.FEASIBLE_POINT
-        elseif model_code == :OptimalLocal
+        elseif model_code == :OptimalLocal || model_code == :Feasible
             return MOI.FEASIBLE_POINT
         elseif model_code == :Unbounded
             return MOI.NO_SOLUTION
@@ -161,7 +161,7 @@ function MOI.get(model::Optimizer, ::MOI.DualStatus)
     if solver_code == :Optimal
         if model_code == :OptimalGlobal
             return MOI.FEASIBLE_POINT
-        elseif model_code == :OptimalLocal
+        elseif model_code == :OptimalLocal || model_code == :Feasible
             return MOI.FEASIBLE_POINT
         elseif model_code == :Unbounded
             return MOI.FEASIBLE_POINT

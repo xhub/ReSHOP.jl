@@ -13,7 +13,7 @@ const MIPOLY_SOLVERS = []
 
 const TERMINATION_TARGET_LOCAL = Dict(
     MINLPTests.FEASIBLE_PROBLEM => JuMP.MOI.ALMOST_LOCALLY_SOLVED,
-    MINLPTests.INFEASIBLE_PROBLEM => JuMP.MOI.OTHER_ERROR,
+    MINLPTests.INFEASIBLE_PROBLEM => JuMP.MOI.INFEASIBLE,
 )
 
 const TERMINATION_TARGET_NLP_CVX_LOCAL = Dict(
@@ -23,7 +23,7 @@ const TERMINATION_TARGET_NLP_CVX_LOCAL = Dict(
 
 const PRIMAL_TARGET_LOCAL = Dict(
     MINLPTests.FEASIBLE_PROBLEM => JuMP.MOI.FEASIBLE_POINT,
-    MINLPTests.INFEASIBLE_PROBLEM => JuMP.MOI.NO_SOLUTION,
+    MINLPTests.INFEASIBLE_PROBLEM => JuMP.MOI.INFEASIBLE_POINT,
 )
 
 
@@ -37,10 +37,10 @@ const PRIMAL_TARGET_LOCAL = Dict(
 @testset "JuMP Model Tests" begin
     @testset "$(solver.constructor): nlp" for solver in NLP_SOLVERS
         MINLPTests.test_nlp(solver, exclude = [
-            "006_010", # handling of user-defined functions
-            "008_011", # 
             "005_010",
             "005_011",  # Uses the function `\`
+            "006_010", # handling of user-defined functions
+            "008_011", # 
         ])
         # For 005_010, Knitro founds a different solution, close
         # to those of MINLPTests.
@@ -55,7 +55,7 @@ const PRIMAL_TARGET_LOCAL = Dict(
         MINLPTests.test_nlp_mi(solver, exclude = [
             "005_010",
             "005_011",  # Uses the function `\`
-            "006_010"   # handling of user-defined functions.
+            "006_010",  # handling of user-defined functions.
         ], termination_target=TERMINATION_TARGET_LOCAL, primal_target=PRIMAL_TARGET_LOCAL)
         MINLPTests.test_nlp_mi_cvx(solver)
     end

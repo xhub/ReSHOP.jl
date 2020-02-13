@@ -13,6 +13,7 @@ const config = MOIT.TestConfig(atol=1e-5, rtol=1e-8,
 const config_local = MOIT.TestConfig(atol=1e-5, rtol=1e-8,
                                      optimal_status=MOI.LOCALLY_SOLVED,
                                      query=false,
+                                     duals=false, # well presolve give the solution, hence no duals ...
                                      infeas_certificates=false, # Do not ask for infeasibility certificates.
                                      modify_lhs=false)
 
