@@ -41,7 +41,7 @@ exclude_nlp = [
               ]
 
 if Sys.isapple()
-    append!(exclude_nlp, "008_010")
+    push!(exclude_nlp, "008_010")
 end
 
 #nlp_mi_002_010 # no obj function
