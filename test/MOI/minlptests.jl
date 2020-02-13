@@ -33,15 +33,21 @@ const PRIMAL_TARGET_LOCAL = Dict(
 #206_010 # maybe division by 0 from some solvers
 
 
+exclude_nlp = [
+               "005_010",
+               "005_011",  # Uses the function `\`
+               "006_010", # handling of user-defined functions
+               "008_011", # 
+              ]
+
+if Sys.isapple()
+    append!(exclude_nlp, "008_010")
+end
+
 #nlp_mi_002_010 # no obj function
 @testset "JuMP Model Tests" begin
     @testset "$(solver.constructor): nlp" for solver in NLP_SOLVERS
-        MINLPTests.test_nlp(solver, exclude = [
-            "005_010",
-            "005_011",  # Uses the function `\`
-            "006_010", # handling of user-defined functions
-            "008_011", # 
-        ])
+        MINLPTests.test_nlp(solver, exclude = exclude_nlp)
         # For 005_010, Knitro founds a different solution, close
         # to those of MINLPTests.
         MINLPTests.nlp_005_010(solver, 1e-5, 1e-5, 1e-5)

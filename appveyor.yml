@@ -59,10 +59,9 @@ install:
 build_script:
 # Need to convert from shallow to complete for Pkg.clone to work
   - IF EXIST .git\shallow (git fetch --unshallow)
-  - C:\projects\julia\bin\julia -e "VERSION >= v\"0.7\" && import Pkg; Pkg.add(\"Compat\")"
-  - C:\projects\julia\bin\julia -e "VERSION >= v\"0.7\" && using InteractiveUtils; versioninfo()"
-  - C:\projects\julia\bin\julia -e "using Compat.Pkg; Pkg.clone(pwd(), \"ReSHOP\"); Pkg.build(\"ReSHOP\")"
+  - C:\projects\julia\bin\julia -e "using InteractiveUtils; versioninfo()"
+  - C:\projects\julia\bin\julia -e "using Pkg; Pkg.clone(pwd(), \"ReSHOP\"); Pkg.build(\"ReSHOP\")"
 
 # We need a valid gams install for now ...
 test_script:
-  - C:\projects\julia\bin\julia -e "using Compat.Pkg; Pkg.test(\"ReSHOP\")"
+  - C:\projects\julia\bin\julia -e "using Pkg; Pkg.test(\"ReSHOP\")"
