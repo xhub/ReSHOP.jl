@@ -12,9 +12,13 @@ convex_nlp_solvers = Any[]
 minlp_solvers = Any[]
 sdp_solvers = Any[]
 
-lp_solvers = ["baron", "cbc", "conopt", "cplex", "knitro", "minos", "pathnlp", "mosek", "xa", "xpress"]
-lp_exclude = Dict(
-                  "knitro" => ["linear8c", "linear8b"])
+lp_solvers = ["baron", "cbc", "conopt", "cplex", "knitro", "minos", "pathnlp", "mosek", "xpress"]
+
+if Sys.islinux() || Sys.iswindows()
+    push!(lp_solvers, "xa")
+end
+
+lp_exclude = Dict("knitro" => ["linear8c", "linear8b"])
 
 quad_solvers = [("baron", "local"),
                 ("conopt", "local"),

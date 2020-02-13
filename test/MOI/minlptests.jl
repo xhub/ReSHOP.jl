@@ -40,7 +40,7 @@ exclude_nlp = [
                "008_011", # 
               ]
 
-if Sys.isapple()
+if Sys.isapple() || Sys.iswindows()
     push!(exclude_nlp, "008_010")
 end
 
