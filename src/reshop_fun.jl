@@ -426,7 +426,7 @@ end
 
 function ctx_get_solvername(ctx::Ptr{context})
 	str = "?"^256
-	res = ccall((:ctx_getsolverstr, libreshop), Cint, (Ptr{context}, Cstring, Cuint), ctx, str, length(str))
+	res = ccall((:gams_getsolverstr, libreshop), Cint, (Ptr{context}, Cstring, Cuint), ctx, str, length(str))
 	res != 0 && error("return code $res from ReSHOP")
 	return str
 end

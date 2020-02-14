@@ -606,7 +606,7 @@ function report_results_common(m::ReSHOPMathProgBaseModel)
           sname = m.solver_name
        end
 
-       println("ReSHOP: solver $(name) cannot solve the specific problem")
+       println("ReSHOP: solver $(sname) cannot solve the specific problem")
        m.status = :Error
 
     else
