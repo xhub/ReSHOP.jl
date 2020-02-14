@@ -86,10 +86,10 @@ mutable struct ReSHOPMathProgBaseModel <: MPB.AbstractMathProgModel
 #    quad_obj::Tuple{Vector{Int}, Vector{Int}, Vector{Float64}}
     quad_obj::Tuple
     offset::Int
-    emp::Nullable{Function}
+    emp::Union{Nothing,Function}
 
 
-    d::Nullable{MPB.AbstractNLPEvaluator}
+    d::Union{Nothing,MPB.AbstractNLPEvaluator}
 
     reshop_ctx::Ptr{context}
     reshop_ctx_dest::Ptr{context}
@@ -142,7 +142,7 @@ mutable struct ReSHOPMathProgBaseModel <: MPB.AbstractMathProgModel
             (),
             0,
             emp,
-            Nullable{MPB.AbstractNLPEvaluator}(),
+            nothing,
             Ptr{context}(C_NULL),
             Ptr{context}(C_NULL),
             Ptr{reshop_model}(C_NULL),

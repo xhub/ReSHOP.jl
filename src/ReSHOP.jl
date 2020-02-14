@@ -10,13 +10,6 @@ const MPB = MathProgBase
 using Compat
 using Compat.LinearAlgebra, Compat.SparseArrays
 
-if VERSION >= v"0.7"
-    # quickfix for Nullable
-    using Nullables
-else
-   Cvoid = Void
-end
-
 export ReSHOPSolver, getsolvername, getsolveresult, getsolveresultnum, getsolvemessage, getsolveexitcode, LinearQuadraticModel
 
 # Load in `deps.jl`, complaining if it does not exist
@@ -53,7 +46,7 @@ include("reshop_gams.jl")
 mutable struct ReSHOPSolver <: MPB.AbstractMathProgSolver
     solver_name::String
     options::Dict{String,Any}
-    emp::Nullable{Function}
+    emp::Union{Nothing,Function}
 end
 
 # TODO(xhub) write a better struct/enum here
@@ -77,7 +70,7 @@ Create a ReSHOPSolver Solver for MPB. The optional arguments are:
 """
 function ReSHOPSolver(solver_name::String="",
                      options::Dict{String,Any}=Dict{String,Any}())
-    ReSHOPSolver(solver_name, options, Nullable{Function}())
+    ReSHOPSolver(solver_name, options, nothing)
 end
 
 

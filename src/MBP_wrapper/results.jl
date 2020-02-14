@@ -13,7 +13,7 @@ function report_results(m::ReSHOPMathProgBaseModel)
             # Try to use NLPEvaluator if we can.
             # Can fail due to unsupported functions so fallback to eval
             try
-                m.objval = eval_f(m.d.value, m.solution)
+                m.objval = eval_f(m.d, m.solution)
             catch
                 CONFIG[:debug] && println("Error: could not evaluate the objective function")
             end

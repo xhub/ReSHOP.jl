@@ -293,8 +293,8 @@ function reshop_declare_vars(ctx, m::ReSHOPMathProgBaseModel)
     end
 
     # Set variable names
-    if m.d.hasvalue
-        ctx_setvarnames(ctx, m.d.value.m.colNames)
+    if !isnothing(m.d)
+        ctx_setvarnames(ctx, m.d.m.colNames)
     end
 end
 
