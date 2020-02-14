@@ -2,7 +2,7 @@ using JuMP, Compat.Test, ReSHOP
 
 # Example testing basic use of NLExpr with ReSHOP.jl
 
-if !isdef(:solver); solver = ReSHOP.ReSHOPSolver(); end
+if !isdef(:solver);global solver; solver = ReSHOP.ReSHOPSolver(); end
 
 @testset "example: jump_nlexpr" begin
     m = Model(solver=solver)

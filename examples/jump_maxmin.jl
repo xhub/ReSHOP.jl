@@ -1,6 +1,6 @@
 using JuMP, Compat.Test, ReSHOP
 
-if !isdef(:solver); solver = ReSHOP.ReSHOPSolver(); end
+if !isdef(:solver);global solver; solver = ReSHOP.ReSHOPSolver(); end
 # Note min and max not implemented in Couenne
 
 ## Solve test problem with simple min functions

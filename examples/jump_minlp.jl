@@ -24,7 +24,7 @@ using JuMP, Compat.Test, ReSHOP
  #  The solution is (1.30098, 0, 1, 0, 1, 0).
  ##
 
-if !isdef(:solver); solver = ReSHOP.ReSHOPSolver(); end
+if !isdef(:solver);global solver; solver = ReSHOP.ReSHOPSolver(); end
 
 @testset "example: jump_minlp" begin
     m = Model(solver=solver)

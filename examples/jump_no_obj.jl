@@ -2,7 +2,7 @@ using JuMP, Compat.Test, ReSHOP
 
 # Example with no objective (#50)
 
-if !isdef(:solver); solver = ReSHOP.ReSHOPSolver(); end
+if !isdef(:solver);global solver; solver = ReSHOP.ReSHOPSolver(); end
 
 @testset "example: jump_no_obj" begin
     m = Model(solver=solver)

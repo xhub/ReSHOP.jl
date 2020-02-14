@@ -8,7 +8,7 @@ using JuMP, Compat.Test, ReSHOP
  #  The optimal objective value is 0
  ##
 
-if !isdef(:solver); solver = ReSHOP.ReSHOPSolver(); end
+if !isdef(:solver);global solver; solver = ReSHOP.ReSHOPSolver(); end
 
 @testset "example: jump_nltrig" begin
     m = Model(solver=solver)
