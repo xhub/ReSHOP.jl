@@ -37,8 +37,12 @@ quad_exclude = Dict("baron" => ["qcp1"], # SLOW_PROGRESS
 # mosek fails?
 mip_solvers = ["xpress", "scip", "cplex", "cbc"]
 
-global_solvers = [("knitro", ""),
-                  ("baron", "")]
+global_solvers = [("knitro", "")]
+
+# fails with "'gmsbaxnx.exe' is not recognized as an internal or external command, operable program or batch file"
+if !Sys.iswindows()
+    push!(global_solvers, ("baron", ""))
+end
 
 # Investigate if we can solve those
 #soc_solvers = copy(quad_solvers)
