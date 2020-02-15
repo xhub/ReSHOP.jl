@@ -341,6 +341,68 @@ function MOI.set(model::Optimizer, ::MOI.ConstraintDualStart,
     return
 end
 
+function MOI.get(model::Optimizer, loc::MOI.ListOfConstraints)
+    list = Vector{Tuple{MOI.DataType,MOI.DataType}}()
+    for S in (
+        MOI.EqualTo{Float64}, MOI.GreaterThan{Float64}, MOI.LessThan{Float64}, MOI.Interval{Float64},
+        MOI.Semicontinuous{Float64}, MOI.Semiinteger{Float64}, MOI.Integer, MOI.ZeroOne
+       )
+        nb = MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable, S}())
+        if nb > 0
+            push!(list, (MOI.SingleVariable, S))
+        end
+    end
+    for S in (MOI.Nonnegatives, MOI.Nonpositives, MOI.Zeros, MOI.SecondOrderCone)
+        nb = MOI.get(model, MOI.NumberOfConstraints{VAF, S}())
+        if nb > 0
+            push!(list, (VAF, S))
+        end
+    end
+    for S in (MOI.Nonnegatives,  MOI.Nonpositives, MOI.Zeros, MOI.SOS1, MOI.SOS2)
+         nb = MOI.get(model, MOI.NumberOfConstraints{VOV, S}())
+         if nb > 0
+             push!(list, (VOV, S))
+         end
+    end
+    for F in (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction)
+        for S in (MOI.EqualTo{Float64}, MOI.GreaterThan{Float64}, MOI.LessThan{Float64})
+            nb = MOI.get(model, MOI.NumberOfConstraints{F, S}())
+            if nb > 0
+                push!(list, (F, S))
+            end
+        end
+    end
+
+    return list
+#    for S in (MOI.SecondOrderCone, MOI.RotatedSecondOrderCone, MOI.ExponentialCone,
+#              MOI.DualExponentialCone, MOI.PowerCone, MOI.DualPowerCone)
+#        nb = MOI.get(model, MOI.ScalarAffineFunction
+end
+
+
+##################################################
+#Constraint validity check
+#
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex)
+    error("MOI.is_valid not implemented for type $(ci)")
+end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}})
+    return has_upper_bound(model, MOI.VariableIndex(ci.value))
+end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}})
+    return has_lower_bound(model, MOI.VariableIndex(ci.value))
+end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
+    return is_fixed(model, MOI.VariableIndex(ci.value))
+end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Float64}})
+    return has_box_bounds(model, MOI.VariableIndex(ci.value))
+end
 ##################################################
 ## Constraint naming
 # TODO

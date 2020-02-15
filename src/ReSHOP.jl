@@ -8,7 +8,7 @@ import MathProgBase
 const MPB = MathProgBase
 
 using Compat
-using Compat.LinearAlgebra, Compat.SparseArrays
+using LinearAlgebra, SparseArrays
 
 export ReSHOPSolver, getsolvername, getsolveresult, getsolveresultnum, getsolvemessage, getsolveexitcode, LinearQuadraticModel
 

@@ -19,19 +19,14 @@ function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{VAF, <: VLS})
 end
 
 function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}})
-    ctx_setvarub(ctx, ci.value-1, Inf64)
+    ctx_setvarlb(model.ctx, ci.value-1, Inf64)
 end
 
 function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}})
-    ctx_setvarlb(ctx, ci.value-1, -Inf64)
+    ctx_setvarub(model.ctx, ci.value-1, -Inf64)
 end
 
-function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
-    ctx_setvarub(ctx, ci.value-1, Inf64)
-    ctx_setvarlb(ctx, ci.value-1, -Inf64)
-end
-
-function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Float64}})
-    ctx_setvarub(ctx, ci.value-1, Inf64)
-    ctx_setvarlb(ctx, ci.value-1, -Inf64)
+function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, Union{MOI.EqualTo{Float64}, MOI.Interval{Float64}}})
+    ctx_setvarub(model.ctx, ci.value-1, Inf64)
+    ctx_setvarlb(model.ctx, ci.value-1, -Inf64)
 end
