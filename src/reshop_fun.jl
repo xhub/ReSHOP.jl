@@ -56,7 +56,7 @@ const term_str = iswin ? "\r\n" : "\n"
 macro chk_index_or_size(idx)
 quote
     if $(esc(idx)) >= reshop_valid_index_max
-        error("the index/size returned by ReSHOP is not valid: upper limit is $(reshop_valid_index_max), value is", $(esc(idx)))
+        error("the index/size returned by ReSHOP is not valid: upper limit is $(reshop_valid_index_max), value is ", $(esc(idx)))
     end
 end
 end
@@ -114,7 +114,6 @@ function ctx_numvar(ctx::Ptr{context})
 		return 0
 	end
 	res = ccall((:model_total_n, libreshop), Csize_t, (Ptr{context},), ctx)
-	@chk_index_or_size(res)
 	return res
 end
 
@@ -233,6 +232,11 @@ function ctx_getequbstat(ctx::Ptr{context}, idx)
 	return val.x
 end
 
+function emp_init(mdl::Ptr{reshop_model})
+	res = ccall((:reshop_alloc_emp, libreshop), Cint, (Ptr{reshop_model},), mdl)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
 function emp_create_equil(max_mp)
 	return ccall((:mp_equil_alloc, libreshop), Ptr{equil}, (Cuint,), max_mp)
 end
@@ -247,7 +251,7 @@ function emp_add_mp_equil(mp_parent, mpe)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_add_equil(emp)
+function emp_add_equil(mdl::Ptr{reshop_model})
 	mpe = Ref{Ptr{equil}}(C_NULL)
 	res = ccall((:reshop_add_equil, libreshop), Cint, (Ptr{reshop_model}, Ref{Ptr{equil}}), mdl, mpe)
 	res != 0 && error("return code $res from ReSHOP")
@@ -261,7 +265,7 @@ function emp_equil_add(mpe, mp)
 end
 
 function emp_mp_ensure(mdl::Ptr{reshop_model}, nb)
-	res = ccall((:reshop_ensure_mp, libreshop), Cint, (Ptr{reshop_model}, Cuint), emp, nb)
+	res = ccall((:reshop_ensure_mp, libreshop), Cint, (Ptr{reshop_model}, Cuint), mdl, nb)
 	res != 0 && error("return code $res from ReSHOP")
 end
 

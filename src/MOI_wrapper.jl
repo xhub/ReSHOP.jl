@@ -195,7 +195,10 @@ function MOI.optimize!(model::Optimizer)
     # TODO check if gams_dir and ctx_dest already exists, do not reallocate then.
     model.ctx_dest, model.gams_dir = reshop_setup_gams()
 
-    model.mdl = reshop_alloc(model.ctx)
+    # Calling from emp, we already have a mdl object
+    if model.mdl == C_NULL
+        model.mdl = reshop_alloc(model.ctx)
+    end
     model.mdl_solver = reshop_alloc(model.ctx_dest)
     model.status = reshop_solve(model.mdl, model.mdl_solver, model.ctx_dest, model.solver_name)
     reshop_report_values(model.mdl_solver, model.mdl)
@@ -206,6 +209,7 @@ end
 function MOI.empty!(model::Optimizer)
     ctx_dealloc(model.ctx_dest)
     reshop_free(model.mdl)
+    model.mdl = C_NULL
     reshop_free(model.mdl_solver)
     if model.ctx != nothing
         ctx_dealloc(model.ctx)

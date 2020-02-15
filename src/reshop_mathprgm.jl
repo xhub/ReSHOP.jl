@@ -11,8 +11,6 @@ function reshop_set_mathprgm_modeltype(m::ReSHOPMathProgBaseModel, idx)
 end
 
 function reshop_declare_mathprgm(mp, mdl::Ptr{reshop_model})
-    # TODO(xhub) that is JuMP-specific
-    m = mp.emp.model_ds.internalModel.inner
 
     reshop_mp = emp_mp_alloc(mdl)
 
@@ -23,13 +21,13 @@ function reshop_declare_mathprgm(mp, mdl::Ptr{reshop_model})
 
         emp_mp_start(reshop_mp, typ)
         emp_mp_objdir(reshop_mp, mp.sense)
+        if (mp.objequ <= 0)
+            error("wrong objective equation value $(mp.objequ)")
+        end
+
         emp_mp_objequ(reshop_mp, mp.objequ-1)
 
-        if mp.objvar > 0
-            emp_mp_objvar(reshop_mp, m.v_index_map[mp.objvar])
-        else
-            emp_mp_objvar(reshop_mp, mp.objvar-1)
-        end
+        emp_mp_objvar(reshop_mp, mp.objvar-1)
 
         for eidx in mp.equs
             if eidx != mp.objequ
@@ -38,7 +36,7 @@ function reshop_declare_mathprgm(mp, mdl::Ptr{reshop_model})
         end
 
         for vidx in mp.vars
-            emp_mp_var(reshop_mp, m.v_index_map[vidx])
+            emp_mp_var(reshop_mp, vidx-1)
         end
     else
         typ = 2
@@ -51,7 +49,7 @@ function reshop_declare_mathprgm(mp, mdl::Ptr{reshop_model})
         for vidx in mp.vars
             if vidx in VIvars
                 eidx = mp.matching[vidx]
-                emp_mp_vipair(reshop_mp, eidx-1, m.v_index_map[vidx])
+                emp_mp_vipair(reshop_mp, eidx-1, vidx-1)
                 equ_seen[sidx] = eidx
                 sidx += 1
                 CONFIG[:debug] && println("DEBUG: eqn $eidx perp x[$vidx]")

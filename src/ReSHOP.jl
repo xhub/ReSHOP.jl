@@ -94,10 +94,6 @@ function reshop_options_set(opt::Dict{String,Any})
     return jopt
 end
 
-function reshop_setemp!(m::ReSHOPSolver, emp)
-   m.emp = emp
-end
-
 end
 
 
