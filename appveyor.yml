@@ -27,9 +27,9 @@ branches:
   only:
     - master
 
-#cache:
-#  - C:\projects\windows_x64_64.exe -> appveyor.yml
-#  - C:\projects\gams ->appveyor.yml
+cache:
+  - C:\projects\windows_x64_64.exe -> appveyor.yml
+  - C:\projects\gams ->appveyor.yml
 
 notifications:
   - provider: Email
