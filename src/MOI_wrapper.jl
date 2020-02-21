@@ -9,6 +9,7 @@
 ##
 ## In particular, KNITRO.jl and IpOPT.jl where used as an inspiration
 
+RESHOP_OPTIONS = ["solver"]
 
 # TODO(Xhub) is this useful?
 const MOIU = MathOptInterface.Utilities
@@ -151,7 +152,7 @@ MOI.supports(model::Optimizer, ::MOI.TimeLimitSec) = false
 # MOI.RawParameters
 function MOI.supports(model::Optimizer, param::MOI.RawParameter)
     name = param.name
-    if name in RESHOP_OPTIONS || haskey(KN_paramName2Indx, name)
+    if name in RESHOP_OPTIONS
         return true
     end
     return false
@@ -161,12 +162,10 @@ function MOI.set(model::Optimizer, p::MOI.RawParameter, value)
     if !MOI.supports(model, p)
         throw(MOI.UnsupportedAttribute)
     end
-    model.options[p.name] = value
-    if p.name == "just an example"
-        return
-    else
-        reshop_option_set(model.options, p.name, value)
+    if p.name == "solver"
+         model.solver_name = value
     end
+    #reshop_option_set(model.options, p.name, value)
     return
 end
 

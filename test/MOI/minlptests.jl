@@ -46,7 +46,7 @@ end
 
 #nlp_mi_002_010 # no obj function
 @testset "JuMP Model Tests" begin
-    @testset "$(solver.constructor): nlp" for solver in NLP_SOLVERS
+    @testset "$(solver): nlp" for solver in NLP_SOLVERS
         MINLPTests.test_nlp(solver, exclude = exclude_nlp)
         # For 005_010, Knitro founds a different solution, close
         # to those of MINLPTests.
@@ -57,7 +57,7 @@ end
         ])
 #        MINLPTests.nlp_cvx_001_010(solver, 
     end
-    @testset "$(solver.constructor): nlp_mi" for solver in MINLP_SOLVERS
+    @testset "$(solver): nlp_mi" for solver in MINLP_SOLVERS
         MINLPTests.test_nlp_mi(solver, exclude = [
             "005_010",
             "005_011",  # Uses the function `\`
