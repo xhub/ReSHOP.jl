@@ -199,6 +199,26 @@ function ctx_getvarmult(ctx::Ptr{context}, idx)
 	return val.x
 end
 
+function ctx_getvarname(ctx::Ptr{context}, idx)
+	len = 1024
+	buf = Vector{UInt8}(undef, len)
+	res = ccall((:ctx_getcolname, libreshop), Cint, (Ptr{context}, Cint, Ptr{UInt8}, Cuint), ctx, idx, buf, len)
+	res != 0 && error("return code $res from ReSHOP")
+	e = findfirst(isequal(0), buf)
+	return String(buf[1:e])
+end
+
+function ctx_getvarbyname(ctx::Ptr{context}, name::String)
+	val = Ref{Cint}(-1)
+	res = ccall((:ctx_getvarbyname, libreshop), Cint, (Ptr{context}, Cstring, Ptr{Cint}), ctx, name, val)
+	return val.x
+end
+
+function reshop_getvartype(ctx::Ptr{context}, idx)
+	res = ccall((:ctx_getvartype, libreshop), Cint, (Ptr{context}, Cint, Cuint), ctx, idx, typ)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
 function ctx_getvarval(ctx::Ptr{context}, idx)
 	val = Ref{Cdouble}(NaN)
 	res = ccall((:ctx_getvarlone, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}), ctx, idx, val)

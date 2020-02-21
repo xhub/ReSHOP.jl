@@ -67,7 +67,7 @@ end
 
 function is_fixed(model::Optimizer, vi::MOI.VariableIndex)
     (lb, ub) = ctx_getvarbounds(model.ctx, vi.value-1)
-    return isfinite(lb) && isfinite(ub) && fabs(ub-lb) < eps()
+    return isfinite(lb) && isfinite(ub) && abs(ub-lb) < eps()
 end
 
 function has_box_bounds(model::Optimizer, vi::MOI.VariableIndex)
@@ -90,5 +90,14 @@ function MOI.set(model::Optimizer, ::MOI.VariableName, vi::MOI.VariableIndex, na
     check_inbounds(model, vi)
     ctx_setvarname(model.ctx, vi.value-1, name)
 end
-#
 
+##################################################
+## getter
+function MOI.get(model::Optimizer, ::MOI.VariablePrimalStart, vi::MOI.VariableIndex)
+    check_inbounds(model, vi)
+    return ctx_getvarval(model.ctx, vi.value-1)
+end
+
+function MOI.get(model::Optimizer, ::MathOptInterface.VariableIndex, name::String)
+    return ctx_getvarname(model.ctx, vi.value-1)
+end

@@ -4,6 +4,9 @@ include("reshop_nlp_moi.jl")
 
 function MOI.set(model::Optimizer, ::MOI.NLPBlock, nlp_data::MOI.NLPBlockData)
     MOI.initialize(nlp_data.evaluator, [:ExprGraph])
+    # TODO(xhub) not sure this is needed. Looks to prevent this function getting called twice
+    #if (model.len_nl_cons > 0) return end
+
     # Process constraints
     load_nlp_constraints(model, nlp_data)
 

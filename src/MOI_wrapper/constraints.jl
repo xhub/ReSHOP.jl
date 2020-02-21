@@ -403,6 +403,10 @@ end
 function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Float64}})
     return has_box_bounds(model, MOI.VariableIndex(ci.value))
 end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer})
+
+end
 ##################################################
 ## Constraint naming
 # TODO
