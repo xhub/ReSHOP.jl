@@ -23,7 +23,7 @@ MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{VAF, MOI.SecondOrderCone}) =
 MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{VOV, T}) where T <: VLS =
     sum(typeof.(collect(keys(model.vov_mapping))) .== MOI.ConstraintIndex{VOV, T})
 MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{VOV, S}) where S <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}} =
-    rhp_get_nb_var(model.ctx, S)
+    sum(typeof.(collect(keys(model.vov_mapping))) .== MOI.ConstraintIndex{VOV, S})
 MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64}, S}) where S <: LS  =
     rhp_get_nb_lequ(model.ctx, S)
 MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{MOI.ScalarQuadraticFunction{Float64}, S}) where S <: LS  =

@@ -64,6 +64,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     vaf_mapping::Dict{MOI.ConstraintIndex{VAF, <: VLS}, Vector{Cuint}}
     quadfn_mapping::Dict{MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{Float64}, <: SS}, Cuint}
     sos_sets::Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}
+    fake_cons_name::Dict{MOI.ConstraintIndex, String}
 
     ctx::Union{Ptr{context}, Nothing}
     ctx_dest::Ptr{context}
@@ -85,22 +86,28 @@ function Optimizer(;options...)
 
     solver_name = ""
     rhp_options = Dict{String, Union{Cdouble, Cint, Bool, Cstring}}()
-    for (name, value) in options
-        if string(name) == "solver"
-            solver_name = value
-        else
-            rhp_set_option(ctx, string(name), value)
-            rhp_options[string(name)] = value
-        end
-    end
     # TODO this is quite a hack just for the "output" option.
     # Refactoring option in ReSHOP will enable us to move on
     reshop_opts = reshop_options_alloc()
+    for (name, value) in options
+	println("DEBUG: Option is $name = $value ($(typeof(value)))")
+        if string(name) == "solver"
+            solver_name = value
+        else
+            res = reshop_option_set(reshop_opts, string(name), value)
+	    println("DEBUG res from reshop_option_set: $res")
+            if (res > 0)
+                 rhp_set_option(ctx, string(name), value)
+            end
+            rhp_options[string(name)] = value
+        end
+    end
 
     model = Optimizer(0, MOI.FEASIBILITY_SENSE, 0,
                       Dict{MOI.ConstraintIndex{VOV, <: VLS}, Cuint}(), Dict{MOI.ConstraintIndex{VAF, <: VLS}, Cuint}(),
                       Dict{MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{Float64}, <: SS}, Cuint}(),
                       Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}(),
+                      Dict{MOI.ConstraintIndex,String}(),
                       ctx, Ptr{context}(C_NULL), Ptr{reshop_model}(C_NULL), Ptr{reshop_model}(C_NULL),
                       reshop_opts, rhp_options, "", nothing, solver_name, -1, 0)
 
@@ -223,6 +230,7 @@ function MOI.empty!(model::Optimizer)
     model.vaf_mapping = Dict()
     model.quadfn_mapping = Dict()
     model.sos_sets       = Dict()
+    model.fake_cons_name = Dict()
     # TODO(xhub) cleanup avar?
     # TODO(xhub) check that it is not necessary to do anything here
     #set_options(model, model.options)

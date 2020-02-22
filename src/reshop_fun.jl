@@ -257,6 +257,12 @@ function ctx_getequbstat(ctx::Ptr{context}, idx)
 	return val.x
 end
 
+function ctx_getequname(ctx::Ptr{context}, eidx)
+	res = ccall((:myo_get_equname, libreshop), Cstring, (Ptr{context}, Cint), ctx, eidx)
+	res != C_NULL || return ""
+	return unsafe_string(res)
+end
+
 function emp_init(mdl::Ptr{reshop_model})
 	res = ccall((:reshop_alloc_emp, libreshop), Cint, (Ptr{reshop_model},), mdl)
 	res != 0 && error("return code $res from ReSHOP")
@@ -704,23 +710,19 @@ function reshop_option_get(opt::Ptr{reshop_options}, k::String)
 end
 
 function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Bool)
-	res = ccall((:option_set_b, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cint), opt, k, v)
-	res != 0 && error("return code $res from ReSHOP")
+	return ccall((:option_set_b, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cint), opt, k, v)
 end
 
 function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Integer)
-	res = ccall((:option_set_i, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cint), opt, k, v)
-	res != 0 && error("return code $res from ReSHOP")
+	return ccall((:option_set_i, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cint), opt, k, v)
 end
 
 function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Cdouble)
-	res = ccall((:option_set_d, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cdouble), opt, k, v)
-	res != 0 && error("return code $res from ReSHOP")
+	return ccall((:option_set_d, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cdouble), opt, k, v)
 end
 
 function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::String)
-	res = ccall((:option_set_s, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cstring), opt, k, v)
-	res != 0 && error("return code $res from ReSHOP")
+	return ccall((:option_set_s, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cstring), opt, k, v)
 end
 
 function reshop_set_modeltype(ctx::Ptr{context}, model_type)
@@ -748,7 +750,7 @@ function rhp_set_option(ctx::Ptr{context}, k::String, v::Cdouble)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function rhp_set_option(ctx::Ptr{context}, k::String, v::Cstring)
+function rhp_set_option(ctx::Ptr{context}, k::String, v::Union{Cstring, String})
 	res = ccall((:rhp_set_option_s, libreshop), Cint, (Ptr{context}, Cstring, Cstring), ctx, k, v)
 	res != 0 && error("return code $res from ReSHOP")
 end

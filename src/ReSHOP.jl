@@ -84,16 +84,6 @@ include("reshop_mathprgm.jl")
 include("reshop_ovf.jl")
 include("reshop_solve.jl")
 
-function reshop_options_set(opt::Dict{String,Any})
-    jopt = reshop_options_alloc()
-
-    for (k,v) in opt
-        reshop_option_set(jopt, k, v)
-    end
-
-    return jopt
-end
-
 end
 
 

@@ -31,6 +31,14 @@ function check_inbounds(model::Optimizer, vi::MOI.VariableIndex)
     return
 end
 
+function check_inbounds(model::Optimizer, vi::Integer)
+    num_variables = ctx_numvar(model.ctx)
+    if !(1 <= vi <= 1+num_variables)
+        error("Invalid variable index $vi. ($num_variables variables in the model.)")
+    end
+    return
+end
+
 ##################################################
 ## Check inbounds for safety.
 function check_inbounds(model::Optimizer, var::MOI.SingleVariable)

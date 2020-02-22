@@ -284,13 +284,18 @@ end
 ##################################################
 ## Constraint DualStart
 function MOI.set(model::Optimizer, ::MOI.ConstraintDualStart,
+                 ci::MOI.ConstraintIndex{MOI.SingleVariable, S}, value::Union{Real, Nothing}) where S <: SS
+
+    val = isa(value, Real) ? Cdouble(value) : 0.
+    ctx_setvarmult(model.ctx, ci.value - 1, val)
+end
+
+function MOI.set(model::Optimizer, ::MOI.ConstraintDualStart,
                  ci::MOI.ConstraintIndex, value::Union{Real, Nothing})
     check_inbounds(model, ci)
     val = isa(value, Real) ? Cdouble(value) : 0.
     if ci in model.vaf_mapping
         ctx_setequmult(model.ctx, ci.value - 1, val)
-    elseif check_inbounds(model, ci.value)
-        ctx_setvarmult(model.ctx, ci.value - 1, val)
     else
         error("Unknown contraint $ci")
     end
@@ -362,7 +367,7 @@ end
 #
 
 function MOI.get(model::Optimizer, loc::MOI.ListOfConstraints)
-    list = Vector{Tuple{MOI.DataType,MOI.DataType}}()
+    list = Vector{Tuple{DataType,DataType}}()
     for S in (
         MOI.EqualTo{Float64}, MOI.GreaterThan{Float64}, MOI.LessThan{Float64}, MOI.Interval{Float64},
         MOI.Semicontinuous{Float64}, MOI.Semiinteger{Float64}, MOI.Integer, MOI.ZeroOne
@@ -460,10 +465,18 @@ end
 ##################################################
 ## Constraint naming
 # TODO
-#function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.VariableIndex{:< ALLV, <: Union{SS,LS,VLS}}, name::String)
-#    ctx_set_equname(model.ctx, ci.value-1, name)
-#end
-#
-#function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.VariableIndex{:< ALLV, <: Union{}}, name::String)
-#    get(model.fake_cons_name, ci, EMPTYSTRING)
-#end
+function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex{<:SF,<:LS}, name::String)
+    ctx_set_equname(model.ctx, ci.value-1, name)
+end
+
+function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex, name::String)
+    model.fake_cons_name[ci] = name
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex{<:SF, <:LS})
+    return ctx_getequname(model.ctx, ci.value-1)
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex)
+    return get(model.fake_cons_name, ci, "")
+end

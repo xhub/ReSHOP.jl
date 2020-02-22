@@ -17,3 +17,13 @@ function reshop_set_printops(io)
     ccall((:reshop_set_printoutops, libreshop), Cvoid, (Ref{Cvoid}, Ref{Cvoid}), pointer_from_objref(io), _C_PRINT)
     return
 end
+
+function reshop_options_set(opt::Dict{String,Any})
+    jopt = reshop_options_alloc()
+
+    for (k,v) in opt
+        reshop_option_set(jopt, k, v)
+    end
+
+    return jopt
+end
