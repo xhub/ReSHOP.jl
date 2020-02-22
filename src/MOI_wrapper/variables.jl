@@ -98,6 +98,28 @@ function MOI.get(model::Optimizer, ::MOI.VariablePrimalStart, vi::MOI.VariableIn
     return ctx_getvarval(model.ctx, vi.value-1)
 end
 
-function MOI.get(model::Optimizer, ::MathOptInterface.VariableIndex, name::String)
+#function MOI.get(model::Optimizer, vi::MathOptInterface.VariableIndex)
+#    return ctx_getvarname(model.ctx, vi.value-1)
+#end
+
+function MOI.get(model::Optimizer, ::Type{MOI.VariableIndex}, name::String)
+    vidx = ctx_getvarbyname(model.ctx, name)
+    if vidx >= 0
+        return MOI.VariableIndex(vidx+1)
+    elseif vidx == -2
+        error("Multiple variables have the name $(name).")
+    else
+        return nothing
+    end
+end
+
+function MOI.get(model::Optimizer, ::MOI.VariableName, vi::MOI.VariableIndex)
+    check_inbounds(model, vi)
     return ctx_getvarname(model.ctx, vi.value-1)
+end
+
+
+function MOI.is_valid(model::Optimizer, vi::MOI.VariableIndex)
+    check_inbounds(model, vi)
+    return rhp_is_var_valid(model.ctx, vi.value-1)
 end

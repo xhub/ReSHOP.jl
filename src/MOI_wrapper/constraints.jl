@@ -253,6 +253,22 @@ function MOI.add_constraint(model::Optimizer, vov::VOV,
 end
 
 ##################################################
+## Change some constraints
+function MOI.set(model::Optimizer, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{MOI.SingleVariable, S}, new_set::S) where S <: SS
+    reshop_set_bound(model.ctx, ci.value-1, new_set);
+end
+
+function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, S}) where S <: SS
+    vidx = ci.value-1
+    ctx_setvarlb(model.ctx, vidx, -Inf64)
+    ctx_setvarub(model.ctx, vidx, Inf64)
+end
+
+function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, <:Union{MOI.ZeroOne, MOI.Integer}})
+    reshop_set_vartype(model.ctx, ci.value - 1, RHP_VARTYPE_X)
+end
+
+##################################################
 ## Binary & Integer constraints.
 
 # Define integer and boolean constraints.
@@ -341,6 +357,10 @@ function MOI.set(model::Optimizer, ::MOI.ConstraintDualStart,
     return
 end
 
+##################################################
+# getters
+#
+
 function MOI.get(model::Optimizer, loc::MOI.ListOfConstraints)
     list = Vector{Tuple{MOI.DataType,MOI.DataType}}()
     for S in (
@@ -379,6 +399,23 @@ function MOI.get(model::Optimizer, loc::MOI.ListOfConstraints)
 #        nb = MOI.get(model, MOI.ScalarAffineFunction
 end
 
+function _get_var_set(model::Optimizer, S::Type{<:Union{MOI.EqualTo, MOI.GreaterThan}}, lb::Float64, ub::Float64)
+    return S(lb)
+end
+
+function _get_var_set(model::Optimizer, S::Type{<:MOI.LessThan}, lb::Float64, ub::Float64)
+    return S(ub)
+end
+
+# TODO semiinteger should have a different codepath
+function _get_var_set(model::Optimizer, S::Type{<:Union{MOI.Interval, MOI.Semicontinuous, MOI.Semiinteger}}, lb::Float64, ub::Float64)
+    return S(lb, ub)
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{MOI.SingleVariable, S}) where S
+    lb, ub = ctx_getvarbounds(model.ctx, ci.value-1)
+    return _get_var_set(model, S, lb, ub)
+end
 
 ##################################################
 #Constraint validity check
@@ -389,11 +426,11 @@ function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex)
 end
 
 function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{Float64}})
-    return has_upper_bound(model, MOI.VariableIndex(ci.value))
+    return has_upper_bound(model, MOI.VariableIndex(ci.value)) && !is_fixed(model, MOI.VariableIndex(ci.value))
 end
 
 function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{Float64}})
-    return has_lower_bound(model, MOI.VariableIndex(ci.value))
+    return has_lower_bound(model, MOI.VariableIndex(ci.value)) && !is_fixed(model, MOI.VariableIndex(ci.value))
 end
 
 function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
@@ -405,8 +442,21 @@ function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariab
 end
 
 function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer})
-
+    return reshop_getvartype(model.ctx, ci.value-1) == RHP_VARTYPE_I
 end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne})
+    return reshop_getvartype(model.ctx, ci.value-1) == RHP_VARTYPE_B
+end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semicontinuous{Float64}})
+    return reshop_getvartype(model.ctx, ci.value-1) == RHP_VARTYPE_SC
+end
+
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Semiinteger{Float64}})
+    return reshop_getvartype(model.ctx, ci.value-1) == RHP_VARTYPE_SI
+end
+
 ##################################################
 ## Constraint naming
 # TODO

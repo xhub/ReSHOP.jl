@@ -33,12 +33,7 @@ function MOI.get(model::Optimizer, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{
     return model.sos_sets[ci]
 end
 
-function MOI.get(model::Optimizer, ::MOI.VariableName, vi::MOI.VariableIndex)
-    check_inbounds(model, vi)
-    return ctx_getvarname(model.ctx, vi, name)
-end
-
-function MOI.get(model::Optimizer, ::MOI.VariableName, vi::MOI.ConstraintIndex)
-    check_inbounds(model, vi)
-    return ctx_getvarname(model.ctx, vi, name)
+function MOI.get(model::Optimizer, ::MOI.VariableName, ci::MOI.ConstraintIndex)
+    check_inbounds(model, ci)
+    return ctx_getequname(model.ctx, ci.value-1)
 end

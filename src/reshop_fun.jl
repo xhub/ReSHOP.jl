@@ -138,7 +138,7 @@ end
 
 function ctx_getvarname(ctx, vidx)
 	res = ccall((:myo_get_varname, libreshop), Cstring, (Ptr{context}, Cint), ctx, vidx)
-	res != C_NULL || error("error in ReSHOP")
+	res != C_NULL || return ""
 	return unsafe_string(res)
 end
 
@@ -199,24 +199,29 @@ function ctx_getvarmult(ctx::Ptr{context}, idx)
 	return val.x
 end
 
-function ctx_getvarname(ctx::Ptr{context}, idx)
-	len = 1024
-	buf = Vector{UInt8}(undef, len)
-	res = ccall((:ctx_getcolname, libreshop), Cint, (Ptr{context}, Cint, Ptr{UInt8}, Cuint), ctx, idx, buf, len)
-	res != 0 && error("return code $res from ReSHOP")
-	e = findfirst(isequal(0), buf)
-	return String(buf[1:e])
-end
+#function ctx_getvarname(ctx::Ptr{context}, idx)
+#	len = 1024
+#	buf = Vector{UInt8}(undef, len)
+#	res = ccall((:ctx_getvarname, libreshop), Cint, (Ptr{context}, Cint, Ptr{UInt8}, Cuint), ctx, idx, buf, len)
+#	res != 0 && error("return code $res from ReSHOP")
+#	e = findfirst(isequal(0), buf)
+#	return String(buf[1:e])
+#end
 
 function ctx_getvarbyname(ctx::Ptr{context}, name::String)
 	val = Ref{Cint}(-1)
 	res = ccall((:ctx_getvarbyname, libreshop), Cint, (Ptr{context}, Cstring, Ptr{Cint}), ctx, name, val)
+	if res == 5
+	  return -2
+	end
 	return val.x
 end
 
 function reshop_getvartype(ctx::Ptr{context}, idx)
-	res = ccall((:ctx_getvartype, libreshop), Cint, (Ptr{context}, Cint, Cuint), ctx, idx, typ)
+	typ = Ref{Cuint}(1000)
+	res = ccall((:ctx_getvartype, libreshop), Cint, (Ptr{context}, Cint, Ptr{Cuint}), ctx, idx, typ)
 	res != 0 && error("return code $res from ReSHOP")
+	return typ.x
 end
 
 function ctx_getvarval(ctx::Ptr{context}, idx)
@@ -840,4 +845,12 @@ function rhp_get_sos_group(ctx::Ptr{context}, vidx, ::Type{MOI.SOS2{Float64}})
 	res = ccall((:rhp_get_var_sos2, libreshop), Cint, (Ptr{context}, Cint, Ref{Ptr{Cuint}}), ctx, vidx, grps)
 	res != 0 && error("return code $res from ReSHOP")
 	return grps.x
+end
+
+function rhp_is_var_valid(ctx::Ptr{context}, vidx)
+	return ccall((:rhp_is_var_valid, libreshop), Cint, (Ptr{context}, Cint,), ctx, vidx) == 1 ? true : false
+end
+
+function rhp_is_equ_valid(ctx::Ptr{context}, eidx)
+	return ccall((:rhp_is_equ_valid, libreshop), Cint, (Ptr{context}, Cint,), ctx, eidx)  == 1 ? true : false
 end
