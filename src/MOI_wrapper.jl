@@ -71,7 +71,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     mdl::Ptr{reshop_model}
     mdl_solver::Ptr{reshop_model}
     options::Ptr{reshop_options}
-    rhp_options::Dict{String, Union{Cdouble, Cint, Bool, Cstring}}
+    rhp_options::Dict{String, Union{Cdouble, Cint, Bool, Cstring, String}}
     gams_dir::String
     avar_cache::Union{Ptr{abstract_var}, Nothing}
     solver_name::String
@@ -79,29 +79,32 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     len_nl_cons::Cuint
 end
 
-function Optimizer(;options...)
-    reshop_set_printops(stdout)
-    # Create ReSHOP context.
-    ctx = ctx_alloc()
-
+function helper_options(ctx, options, reshop_opts::Ptr{reshop_options})
     solver_name = ""
-    rhp_options = Dict{String, Union{Cdouble, Cint, Bool, Cstring}}()
-    # TODO this is quite a hack just for the "output" option.
-    # Refactoring option in ReSHOP will enable us to move on
-    reshop_opts = reshop_options_alloc()
+    rhp_options = Dict{String, Union{Cdouble, Cint, Bool, Cstring, String}}()
     for (name, value) in options
-	println("DEBUG: Option is $name = $value ($(typeof(value)))")
         if string(name) == "solver"
             solver_name = value
         else
             res = reshop_option_set(reshop_opts, string(name), value)
-	    println("DEBUG res from reshop_option_set: $res")
             if (res > 0)
                  rhp_set_option(ctx, string(name), value)
             end
             rhp_options[string(name)] = value
         end
     end
+    return (solver_name, rhp_options)
+end
+
+function Optimizer(;options...)
+    reshop_set_printops(stdout)
+    # Create ReSHOP context.
+    ctx = ctx_alloc()
+
+    # TODO this is quite a hack just for the "output" option.
+    # Refactoring option in ReSHOP will enable us to move on
+    reshop_opts = reshop_options_alloc()
+    solver_name, rhp_options = helper_options(ctx, options, reshop_opts)
 
     model = Optimizer(0, MOI.FEASIBILITY_SENSE, 0,
                       Dict{MOI.ConstraintIndex{VOV, <: VLS}, Cuint}(), Dict{MOI.ConstraintIndex{VAF, <: VLS}, Cuint}(),
@@ -220,9 +223,7 @@ function MOI.empty!(model::Optimizer)
     if model.ctx != nothing
         ctx_dealloc(model.ctx)
         model.ctx = ctx_alloc()
-        for (k, v) in model.rhp_options
-            rhp_set_option(model.ctx, k, v)
-        end
+        helper_options(model.ctx, model.rhp_options, model.options)
     end
 
     model.number_solved = 0

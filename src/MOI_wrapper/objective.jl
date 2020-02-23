@@ -30,7 +30,13 @@ end
 
 function add_objective!(model::Optimizer, var::MOI.SingleVariable)
     check_inbounds(model, var)
-    rhp_set_objvar(model.ctx, var.variable.value - 1)
+    # TODO(Xhub) because of ovf, we need to always add an equation
+#    rhp_set_objvar(model.ctx, var.variable.value - 1)
+    eidx = rhp_add_equ(model.ctx)
+    avar = _ensure_avar(model)
+    rhp_avar_set(avar, var.variable.value - 1)
+    rhp_equ_add_linear(model.ctx, eidx, avar, 1.)
+    rhp_set_objeqn(model.ctx, eidx)
     return
 end
 

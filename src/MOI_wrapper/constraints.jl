@@ -367,7 +367,9 @@ end
 #
 
 function MOI.get(model::Optimizer, loc::MOI.ListOfConstraints)
+    @warn "MOI.get(model::Optimizer, loc::MOI.ListOfConstraints) is not yet implemented for ReSHOP"
     list = Vector{Tuple{DataType,DataType}}()
+    return list
     for S in (
         MOI.EqualTo{Float64}, MOI.GreaterThan{Float64}, MOI.LessThan{Float64}, MOI.Interval{Float64},
         MOI.Semicontinuous{Float64}, MOI.Semiinteger{Float64}, MOI.Integer, MOI.ZeroOne
@@ -466,7 +468,7 @@ end
 ## Constraint naming
 # TODO
 function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex{<:SF,<:LS}, name::String)
-    ctx_set_equname(model.ctx, ci.value-1, name)
+    ctx_setequname(model.ctx, ci.value-1, name)
 end
 
 function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex, name::String)

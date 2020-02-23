@@ -126,6 +126,11 @@ function ctx_numequ(ctx::Ptr{context})
 	return res
 end
 
+function ctx_setequname(ctx, eidx, name::String)
+	res = ccall((:myo_set_equname, libreshop), Cint, (Ptr{context}, Cint, Cstring), ctx, eidx, name)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
 function ctx_setvarnames(ctx, names::Vector{String})
 	res = ccall((:myo_set_varnames, libreshop), Cint, (Ptr{context}, Ptr{Ptr{Cchar}}, Cuint), ctx, names, length(names))
 	res != 0 && error("return code $res from ReSHOP")
@@ -722,7 +727,7 @@ function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Cdouble)
 end
 
 function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::String)
-	return ccall((:option_set_s, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cstring), opt, k, v)
+	return ccall((:option_set_str, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cstring), opt, k, v)
 end
 
 function reshop_set_modeltype(ctx::Ptr{context}, model_type)
