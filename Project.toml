@@ -3,7 +3,7 @@ uuid = "97740bd8-9665-555f-bcf8-31e31065c979"
 license = "MIT"
 desc = "Reformulation Solver for Hierachical Optimization Problem"
 repo = "https://github.com/xhub/ReSHOP.jl.git"
-version = "0.0.0"
+version = "0.1.0"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
