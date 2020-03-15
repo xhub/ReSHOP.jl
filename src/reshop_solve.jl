@@ -11,11 +11,11 @@ function reshop_solve(mdl::Ptr{reshop_model}, mdl_solver::Ptr{reshop_model}, ctx
     res != 0 && error("return code $res from ReSHOP")
 
     if CONFIG[:export_gms]
-        ccall((:gams_set_solverstr, libreshop), Cint, (Ptr{context}, Cstring), ctx_dest, "CONVERTD")
+        ccall((:gams_setsolverstr, libreshop), Cint, (Ptr{context}, Cstring), ctx_dest, "CONVERTD")
         ccall((:reshop_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
     end
 
-    ccall((:gams_set_solverstr, libreshop), Cint, (Ptr{ReSHOP.context}, Cstring), ctx_dest, solver_name)
+    ccall((:gams_setsolverstr, libreshop), Cint, (Ptr{ReSHOP.context}, Cstring), ctx_dest, solver_name)
     res = ccall((:reshop_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
 
     return res

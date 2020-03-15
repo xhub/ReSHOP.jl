@@ -375,7 +375,7 @@ end
 function emp_ovf(mdl, name, ovf_vidx, args)
 	ovf_def = Ref{Ptr{ovf_definition}}(C_NULL)
 	args_var = reshop_avar(length(args), args)
-	res = ccall((:ovf_add, libreshop), Cint, (Ptr{reshop_model}, Cstring, Cint, Ptr{abstract_var}, Ref{Ptr{ovf_definition}}),
+	res = ccall((:rhp_ovf_add, libreshop), Cint, (Ptr{reshop_model}, Cstring, Cint, Ptr{abstract_var}, Ref{Ptr{ovf_definition}}),
 							                              mdl, name, ovf_vidx, args_var, ovf_def)
 	res != 0 && error("return code $res from ReSHOP")
 	reshop_avar_free(args_var)
@@ -383,18 +383,18 @@ function emp_ovf(mdl, name, ovf_vidx, args)
 end
 
 function emp_ovf_param(ovf_def, param_name, scalar::Number)
-	res = ccall((:ovf_param_add_scalar, libreshop), Cint, (Ptr{ovf_definition}, Cstring, Cdouble), ovf_def, param_name, scalar)
+	res = ccall((:rhp_ovf_param_add_scalar, libreshop), Cint, (Ptr{ovf_definition}, Cstring, Cdouble), ovf_def, param_name, scalar)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_ovf_param(ovf_def, param_name, arr::Vector)
   arrC = Vector{Cdouble}(arr)
-	res = ccall((:ovf_param_add_vector, libreshop), Cint, (Ptr{ovf_definition}, Cstring, Cuint, Ptr{Cdouble}), ovf_def, param_name, length(arr), arrC)
+	res = ccall((:rhp_ovf_param_add_vector, libreshop), Cint, (Ptr{ovf_definition}, Cstring, Cuint, Ptr{Cdouble}), ovf_def, param_name, length(arr), arrC)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_ovf_check(ovf_def)
-	res = ccall((:ovf_check, libreshop), Cint, (Ptr{ovf_definition},), ovf_def)
+	res = ccall((:rhp_ovf_check, libreshop), Cint, (Ptr{ovf_definition},), ovf_def)
 end
 
 function equtree_var(ctx, tree, node, idx, coeff)

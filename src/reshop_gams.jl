@@ -26,7 +26,7 @@ function reshop_setup_gams()
     # we need an empty Matrixfile
     touch(joinpath(cur_dir, "gamsmatr.dat"))
 
-    res = ccall((:gams_set_gamscntr, libreshop), Cint, (Ptr{context}, Cstring), ctx, joinpath(cur_dir, "gamscntr.dat"))
+    res = ccall((:gams_setgamscntr, libreshop), Cint, (Ptr{context}, Cstring), ctx, joinpath(cur_dir, "gamscntr.dat"))
     res != 0 && error("return code $res from ReSHOP")
 
     # hm bad hack
@@ -34,7 +34,7 @@ function reshop_setup_gams()
 
     CONFIG[:debug] && println("DEBUG: gamsdir is ``$gamsdir''")
 
-    res = ccall((:gams_set_gamsdir, libreshop), Cint, (Ptr{context}, Cstring), ctx, gamsdir)
+    res = ccall((:gams_setgamsdir, libreshop), Cint, (Ptr{context}, Cstring), ctx, gamsdir)
     res != 0 && error("return code $res from ReSHOP")
 
     ENV["PATH"] *= ":" * gamsdir
