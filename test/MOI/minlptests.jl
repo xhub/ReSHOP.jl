@@ -1,4 +1,4 @@
-## Test Knitro with MINLPTests
+## Test ReSHOP with MINLPTests
 #
 using MINLPTests, JuMP, Test
 

@@ -19,7 +19,7 @@ function MOI.set(model::Optimizer, ::MOI.NLPBlock, nlp_data::MOI.NLPBlockData)
 end
 
 # Keep loading of NLP constraints apart to load all NLP model all in once
-# inside Knitro.
+# inside ReSHOP.
 function load_nlp_constraints(model::Optimizer, nlp_data::MOI.NLPBlockData)
     # This heavily relies on some convention
     model.start_nl_cons = Int(ctx_numequ(model.ctx))
@@ -68,7 +68,7 @@ function load_nlp_constraints(model::Optimizer, nlp_data::MOI.NLPBlockData)
         if length(lin_part) > 0
             avar = _ensure_avar(model)
             rhp_avar_set(avar, Vector{Int32}(keys(lin_part) .- 1))
-            rhp_equ_add_linear(model.ctx, eidx, avar, collect(values(lin_part)))
+            rhp_equ_add_linear_chk(model.ctx, eidx, avar, collect(values(lin_part)))
         end
         reshop_set_equtype(model.ctx, eidx, relation_to_reshop[rel])
         isfinite(lb) && reshop_set_rhs(model.ctx, eidx, lb)
@@ -101,7 +101,7 @@ function load_nlp_objective(model::Optimizer, nlp_data::MOI.NLPBlockData)
     if length(lin_part) > 0
        avar = _ensure_avar(model)
        rhp_avar_set(avar, Vector{Int32}(keys(lin_part) .- 1))
-       rhp_equ_add_linear(model.ctx, eidx, avar, collect(values(lin_part)))
+       rhp_equ_add_linear_chk(model.ctx, eidx, avar, collect(values(lin_part)))
     end
     rhp_set_objeqn(model.ctx, eidx)
 end

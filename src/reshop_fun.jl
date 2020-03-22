@@ -67,15 +67,19 @@ function ctx_add_lin_var(ctx::Ptr{context}, eidx, vidx, coeff::Cdouble)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function rhp_equ_add_linear(ctx::Ptr{context}, eidx, avar::Ptr{abstract_var}, coeffs::Cdouble)
-	@assert reshop_avar_size(avar) == 1
-	rhp_equ_add_linear(ctx, eidx, avar, [coeffs])
-end
-
 function rhp_equ_add_linear(ctx::Ptr{context}, eidx, avar::Ptr{abstract_var}, coeffs::Vector{Cdouble})
 	equ = ctx_getequ(ctx, eidx)
-	res = ccall((:rhp_equ_add_lin, libreshop), Cint, (Ptr{context}, Ptr{reshop_equ}, Ref{Cdouble}, Ptr{abstract_var}, Cdouble),
-							ctx, equ, coeffs, avar, 1.)
+	res = ccall((:rhp_equ_add_lin, libreshop), Cint,
+		    (Ptr{context}, Ptr{reshop_equ}, Ptr{abstract_var}, Ref{Cdouble}),
+			ctx, equ, avar, coeffs)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
+function rhp_equ_add_linear_chk(ctx::Ptr{context}, eidx, avar::Ptr{abstract_var}, coeffs::Vector{Cdouble})
+	equ = ctx_getequ(ctx, eidx)
+	res = ccall((:rhp_equ_add_lin_chk, libreshop), Cint,
+		    (Ptr{context}, Ptr{reshop_equ}, Ptr{abstract_var}, Ref{Cdouble}),
+			ctx, equ, avar, coeffs)
 	res != 0 && error("return code $res from ReSHOP")
 end
 

@@ -84,7 +84,7 @@ end
 #
 ##################################################
 # Import legacy from LinQuadOptInterface to ease the integration
-# of KNITRO quadratic and linear facilities.
+# of ReSHOP quadratic and linear facilities.
 ##################################################
 # URL: https://github.com/JuliaOpt/LinQuadOptInterface.jl
 #

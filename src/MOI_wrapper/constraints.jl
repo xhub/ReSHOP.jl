@@ -121,6 +121,7 @@ function MOI.add_constraint(model::Optimizer,
 
     avar = _ensure_avar(model)
     rhp_avar_set(avar, vidx)
+    # TODO(Xhub) change this when quadratic constrains are supported
     rhp_equ_add_lin_tree(model.ctx, eidx, coefs, avar, 1.)
     _set_rhs(model, eidx, func.constant, set)
     # Add constraints to index.
