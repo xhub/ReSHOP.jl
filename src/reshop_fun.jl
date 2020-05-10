@@ -62,24 +62,21 @@ end
 end
 
 function ctx_add_lin_var(ctx::Ptr{context}, eidx, vidx, coeff::Cdouble)
-	equ = ctx_getequ(ctx, eidx)
-	res = ccall((:equ_add_var, libreshop), Cint, (Ptr{context}, Ptr{reshop_equ}, Cint, Cdouble), ctx, equ, vidx, coeff)
+	res = ccall((:rhp_equ_addvar, libreshop), Cint, (Ptr{context}, Cint, Cint, Cdouble), ctx, eidx, vidx, coeff)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function rhp_equ_add_linear(ctx::Ptr{context}, eidx, avar::Ptr{abstract_var}, coeffs::Vector{Cdouble})
-	equ = ctx_getequ(ctx, eidx)
-	res = ccall((:rhp_equ_add_lin, libreshop), Cint,
-		    (Ptr{context}, Ptr{reshop_equ}, Ptr{abstract_var}, Ref{Cdouble}),
-			ctx, equ, avar, coeffs)
+	res = ccall((:rhp_equ_addlin, libreshop), Cint,
+		    (Ptr{context}, Cint, Ptr{abstract_var}, Ref{Cdouble}),
+			ctx, eidx, avar, coeffs)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function rhp_equ_add_linear_chk(ctx::Ptr{context}, eidx, avar::Ptr{abstract_var}, coeffs::Vector{Cdouble})
-	equ = ctx_getequ(ctx, eidx)
-	res = ccall((:rhp_equ_add_lin_chk, libreshop), Cint,
-		    (Ptr{context}, Ptr{reshop_equ}, Ptr{abstract_var}, Ref{Cdouble}),
-			ctx, equ, avar, coeffs)
+	res = ccall((:rhp_equ_addlinchk, libreshop), Cint,
+		    (Ptr{context}, Cint, Ptr{abstract_var}, Ref{Cdouble}),
+			ctx, eidx, avar, coeffs)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -106,11 +103,11 @@ function ctx_getvar(ctx, idx)
 end
 
 function ctx_m(ctx)
-	return ccall((:ctx_m, libreshop), Cint, (Ptr{context},), ctx)
+	return ccall((:ctx_m, libreshop), Cuint, (Ptr{context},), ctx)
 end
 
 function ctx_n(ctx)
-	return ccall((:ctx_n, libreshop), Cint, (Ptr{context},), ctx)
+	return ccall((:ctx_n, libreshop), Cuint, (Ptr{context},), ctx)
 end
 
 function ctx_numvar(ctx::Ptr{context})
@@ -361,18 +358,18 @@ function emp_mp_print(mp, ctx)
 	ccall((:mathprgm_print, libreshop), Cint, (Ptr{mathprgm}, Ptr{context}), mp, ctx)
 end
 
-function reshop_report_values(mdl_solver::Ptr{reshop_model}, mdl::Ptr{reshop_model})
-	res = ccall((:reshop_report_values, libreshop), Cint, (Ptr{reshop_model}, Ptr{reshop_model}), mdl_solver, mdl)
+function reshop_postprocess(mdl_solver::Ptr{reshop_model})
+	res = ccall((:rhp_postprocess, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_set_root(mdl::Ptr{reshop_model}, mpe::Ptr{equil})
-	res = ccall((:reshop_set_emproot_mpe, libreshop), Cint, (Ptr{reshop_model}, Ptr{equil}), mdl, mpe)
+	res = ccall((:rhp_emproot_setmpe, libreshop), Cint, (Ptr{reshop_model}, Ptr{equil}), mdl, mpe)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_set_root(mdl::Ptr{reshop_model}, mp::Ptr{mathprgm})
-	res = ccall((:reshop_set_emproot_mp, libreshop), Cint, (Ptr{reshop_model}, Ptr{mathprgm}), mdl, mp)
+	res = ccall((:rhp_emproot_setmp, libreshop), Cint, (Ptr{reshop_model}, Ptr{mathprgm}), mdl, mp)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -475,11 +472,6 @@ function ctx_get_solvername(ctx::Ptr{context})
 	return str
 end
 
-function rhp_add_box_var(ctx::Ptr{context}, lower::Cdouble, upper::Cdouble)
-	res = ccall((:model_add_box_var, libreshop), Cint, (Ptr{context}, Cdouble, Cdouble), ctx, lower, upper)
-	res != 0 && error("return code $res from ReSHOP")
-end
-
 function rhp_add_free_var(ctx::Ptr{context}, nb, avar::Ptr{abstract_var}=Ptr{abstract_var}(C_NULL))
 	res = ccall((:model_add_free_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{abstract_var}), ctx, nb, avar)
 	res != 0 && error("return code $res from ReSHOP")
@@ -539,7 +531,7 @@ end
 
 function reshop_decl_eqn(ctx::Ptr{context})
 	minn = Ref{Cint}(-1)
-	res = ccall((:myo_add_equation, libreshop), Cint, (Ptr{context}, Ref{Cint}), ctx, minn)
+	res = ccall((:rhp_add_equation, libreshop), Cint, (Ptr{context}, Ref{Cint}), ctx, minn)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -561,7 +553,7 @@ function rhp_equ_add_quadratic(ctx::Ptr{context}, eidx, vidx1, vidx2, coeffs)
 	vidx1C = Vector{Cint}(vidx1)
 	vidx2C = Vector{Cint}(vidx2)
 	@assert length(vidx1) == length(vidx2) == length(coeffs)
-	res = ccall((:myo_add_equ_quad, libreshop), Cint, (Ptr{context}, Cint, Csize_t, Ptr{Cint}, Ptr{Cint}, Ptr{Cdouble}, Cdouble),
+	res = ccall((:rhp_add_equ_quad, libreshop), Cint, (Ptr{context}, Cint, Csize_t, Ptr{Cint}, Ptr{Cint}, Ptr{Cdouble}, Cdouble),
 							ctx, eidx, length(vidx1C), vidx1C, vidx2C, coeffs, 1.)
 	res != 0 && error("return code $res from ReSHOP")
 end
@@ -574,13 +566,13 @@ function reshop_mat_coo(ridx, cidx, vals)
 	# beaware of dragons! --xhub
 	ridxC = Vector{Cint}(ridx)
 	cidxC = Vector{Cint}(cidx)
-	mat = ccall((:empmat_triplet, libreshop), Ptr{reshop_sp_matrix}, (Cuint, Cuint, Cuint, Ptr{Cint}, Ptr{Cint}, Ref{Cdouble}),
+	mat = ccall((:rhp_mat_triplet, libreshop), Ptr{reshop_sp_matrix}, (Cuint, Cuint, Cuint, Ptr{Cint}, Ptr{Cint}, Ref{Cdouble}),
 							0, 0, length(vals), ridxC, cidxC, vals)
 	return mat
 end
 
 function reshop_mat_free(mat)
-	ccall((:empmat_free, libreshop), Cvoid, (Ptr{reshop_sp_matrix},), mat)
+	ccall((:rhp_mat_free, libreshop), Cvoid, (Ptr{reshop_sp_matrix},), mat)
 end
 
 function rhp_set_objeqn(ctx::Ptr{context}, eidx)
@@ -656,7 +648,7 @@ function rhp_add_var(ctx::Ptr{context}, avar::Ptr{abstract_var})
 end
 
 function rhp_add_var(ctx::Ptr{context}, nb, avar::Ptr{abstract_var})
-	res = ccall((:myo_add_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{abstract_var}), ctx, nb, avar)
+	res = ccall((:rhp_add_vars, libreshop), Cint, (Ptr{context}, Cuint, Ptr{abstract_var}), ctx, nb, avar)
 	res != 0 && error("return code $res from ReSHOP")
 end
 

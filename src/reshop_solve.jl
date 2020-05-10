@@ -7,16 +7,16 @@ function reshop_solve(mdl::Ptr{reshop_model}, mdl_solver::Ptr{reshop_model}, ctx
     res != 0 && error("return code $res from ReSHOP")
 
     # TODO(xhub) HIGH why is true here?
-    res = ccall((:reshop_transform, libreshop), Cint, (Ptr{reshop_model}, Ptr{reshop_model}), mdl, mdl_solver)
+    res = ccall((:rhp_process, libreshop), Cint, (Ptr{reshop_model}, Ptr{reshop_model}), mdl, mdl_solver)
     res != 0 && error("return code $res from ReSHOP")
 
     if CONFIG[:export_gms]
         ccall((:gams_setsolverstr, libreshop), Cint, (Ptr{context}, Cstring), ctx_dest, "CONVERTD")
-        ccall((:reshop_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
+        ccall((:rhp_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
     end
 
     ccall((:gams_setsolverstr, libreshop), Cint, (Ptr{ReSHOP.context}, Cstring), ctx_dest, solver_name)
-    res = ccall((:reshop_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
+    res = ccall((:rhp_solve, libreshop), Cint, (Ptr{reshop_model},), mdl_solver)
 
     return res
 end

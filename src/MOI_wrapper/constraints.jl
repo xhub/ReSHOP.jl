@@ -135,7 +135,7 @@ function MOI.add_constraint(model::Optimizer,
     # TODO: add check inbounds for VectorAffineFunction.
     current_m = ctx_numequ(model.ctx)
     num_cons = length(func.constants)
-    # Add constraints inside KNITRO.
+    # Add constraints inside ReSHOP.
     rhp_add_equs(model.ctx, num_cons)
 
     # Parse vector affine expression.
@@ -161,7 +161,7 @@ end
 # Add second order cone constraint.
 #function MOI.add_constraint(model::Optimizer,
 #                            func::MOI.VectorAffineFunction, set::MOI.SecondOrderCone)
-#    # Add constraints inside KNITRO.
+#    # Add constraints inside ReSHOP.
 #    rhp_add_equ(model.ctx)
 #    eidx = ctx_numequ(model.ctx)
 #

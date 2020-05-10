@@ -210,7 +210,7 @@ function MOI.optimize!(model::Optimizer)
     end
     model.mdl_solver = reshop_alloc(model.ctx_dest)
     model.status = reshop_solve(model.mdl, model.mdl_solver, model.ctx_dest, model.solver_name)
-    reshop_report_values(model.mdl_solver, model.mdl)
+    reshop_postprocess(model.mdl_solver)
 
     return
 end

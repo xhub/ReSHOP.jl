@@ -1,8 +1,6 @@
 function report_results(m::ReSHOPMathProgBaseModel)
     # TODO(Xhub) fix this hack
-    reshop_report_values(m.reshop_mdl_solver, m.reshop_mdl)
-#    res = ccall((:model_eval_eqns, libreshop), Cint, (Ptr{context}, Ptr{context}), m.reshop_ctx, m.reshop_ctx_dest)
-    #res != 0 && error("ReSHOP: error code $res")
+    reshop_postprocess(m.reshop_mdl_solver)
 
     # Next, read for the variable values
     report_results_common(m)

@@ -12,7 +12,8 @@ convex_nlp_solvers = Any[]
 minlp_solvers = Any[]
 sdp_solvers = Any[]
 
-lp_solvers = ["baron", "cbc", "conopt", "cplex", "knitro", "minos", "pathnlp", "mosek", "xpress"]
+#lp_solvers = ["baron", "cbc", "conopt", "cplex", "knitro", "minos", "pathnlp", "mosek", "xpress"]
+lp_solvers = ["baron", "conopt", "knitro", "minos", "pathnlp", "mosek", "xpress"]
 
 if Sys.islinux() || Sys.iswindows()
     push!(lp_solvers, "xa")
@@ -22,7 +23,7 @@ lp_exclude = Dict("knitro" => ["linear8c", "linear8b"])
 
 quad_solvers = [("baron", "local"),
                 ("conopt", "local"),
-                ("cplex", "nodual"),
+#                ("cplex", "nodual"),
                 ("knitro", ""),
                 ("minos", "local"),
                 ("pathnlp", "local"),
@@ -30,12 +31,12 @@ quad_solvers = [("baron", "local"),
                 ("xpress", "")]
 quad_exclude = Dict("baron" => ["qcp1"], # SLOW_PROGRESS
                     "conopt" => ["socp1", "qcp1"],
-                    "cplex" => ["socp1"],
+#                    "cplex" => ["socp1"],
                     "minos" => ["socp1"],
                     "pathnlp" => ["socp1"],
                     "xpress" => ["qcp1"])
 # mosek fails?
-mip_solvers = ["xpress", "scip", "cplex", "cbc"]
+mip_solvers = ["xpress", "scip"]#, "cplex", "cbc"]
 
 global_solvers = [("knitro", "")]
 

@@ -12,7 +12,7 @@ function add_objective!(model::Optimizer, objective::MOI.ScalarQuadraticFunction
     avar = _ensure_avar(model)
     rhp_avar_set(avar, lvidx)
     rhp_equ_add_linear_chk(model.ctx, eidx, avar, lcoefs)
-    reshop_set_rhs(model.ctx, eidx, -objective.constant)
+    reshop_set_rhs(model.ctx, eidx, objective.constant)
     rhp_set_objeqn(model.ctx, eidx)
     return
 end
@@ -23,7 +23,7 @@ function add_objective!(model::Optimizer, objective::MOI.ScalarAffineFunction)
     avar = _ensure_avar(model)
     rhp_avar_set(avar, lvidx)
     rhp_equ_add_linear(model.ctx, eidx, avar, lcoefs)
-    reshop_set_rhs(model.ctx, eidx, -objective.constant)
+    reshop_set_rhs(model.ctx, eidx, objective.constant)
     rhp_set_objeqn(model.ctx, eidx)
     return
 end
