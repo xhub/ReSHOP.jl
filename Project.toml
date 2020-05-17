@@ -3,6 +3,7 @@ uuid = "97740bd8-9665-555f-bcf8-31e31065c979"
 license = "MIT"
 desc = "Reformulation Solver for Hierachical Optimization Problem"
 repo = "https://github.com/xhub/ReSHOP.jl.git"
+authors = ["Olivier Huber <oli.huber@gmail.com>"]
 version = "0.1.0"
 
 [deps]
@@ -16,7 +17,11 @@ MathProgBase = "fdba3010-5040-5b88-9595-932c9decdf73"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-julia = "^1"
+julia = "1"
+MathOptInterface = "^0.9"
+MathProgBase = "^0.7.7"
+JuMP = "0.18, 0.19, 0.20, 0.21"
+BinDeps = "1.0"
 
 [extras]
 MINLPTests = "ee0a3090-8ee9-5cdb-b8cb-8eeba3165522"
