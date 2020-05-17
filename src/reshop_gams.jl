@@ -46,6 +46,8 @@ function reshop_setup_gams()
 end
 
 function reshop_init_gams_solverdata(force=false)
+    curdir = pwd()
+
     if !isdir(solverdata_dir)
         error("No directory named $solverdata_dir. ")
     end
@@ -60,15 +62,18 @@ function reshop_init_gams_solverdata(force=false)
     println("Running the gams command to initial bootstrap file\n")
 
     mktempdir(solverdata_dir) do substr
+        cd(solverdata_dir)
         # use run(`gams $gms_file scrdir=$substr lo=0 curdir=$substr`) ?
         run(`gams $gms_file scrdir=$substr`)
 
         open(gamscntr, "w") do out_gamscntr
             input = read(joinpath(substr, "gamscntr.dat"), String)
+            input = replace(input, pwd() => "@@SUB@@")
             println(out_gamscntr, replace(input, substr => "@@SUB@@"))
         end
     end
 
     println("\nGAMS boostrap file successfully generated")
+    cd(curdir)
 
 end
