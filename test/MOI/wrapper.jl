@@ -70,8 +70,6 @@ const OPTIMIZER = ReSHOP.Optimizer(; optimizer_kw...)
 #    end
 end
 
-GC.gc()
-
 @testset "MOI Linear tests" begin
     @testset "using $lp_solver" for lp_solver in lp_solvers
     optimizer = ReSHOP.Optimizer(solver=lp_solver; optimizer_kw...)
@@ -95,8 +93,6 @@ GC.gc()
     end
 end
 
-GC.gc()
-
 @testset "MOI QP/QCQP tests" begin
     @testset "with $quad_solver" for (quad_solver, config_str) in quad_solvers
     # Exclude NCQP
@@ -107,8 +103,6 @@ GC.gc()
     MOIT.contquadratictest(ReSHOP.Optimizer(solver=quad_solver; optimizer_kw...), get(config_solver, quad_solver, solver_config), exclude)
     end
 end
-
-GC.gc()
 
 @testset "MOI non-convex QP/QCQP tests" begin
     @testset "with $global_solver" for (global_solver, config_str) in global_solvers
@@ -122,8 +116,6 @@ GC.gc()
     MOIT.ncqcp2test(moi_solver, get(config_solver, global_solver, solver_config))
     end
 end
-
-GC.gc()
 
 #= @testset "MOI SOCP tests" begin =#
 #=     # TODO: DualObjectivevalue not supported =#
