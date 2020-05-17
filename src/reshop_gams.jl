@@ -68,8 +68,10 @@ function reshop_init_gams_solverdata(force=false)
 
         open(gamscntr, "w") do out_gamscntr
             input = read(joinpath(substr, "gamscntr.dat"), String)
+            # the order of subsitution matters here
+            input = replace(input, substr => "@@SUB@@")
             input = replace(input, pwd() => "@@SUB@@")
-            println(out_gamscntr, replace(input, substr => "@@SUB@@"))
+            println(out_gamscntr, input)
         end
     end
 
