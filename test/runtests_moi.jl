@@ -10,4 +10,5 @@ using Test
 include("MOI/solvers.jl")
 
 include("MOI/minlptests.jl")
+GC.gc()
 include("MOI/wrapper.jl")
