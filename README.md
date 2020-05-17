@@ -17,11 +17,20 @@ as presented in this [video presentation](https://www.youtube.com/watch?v=u7vASG
 
 One side-effect of implementing those model transformations is that ReSHOP has a full-fledged model representation.
 This implies that it is capable of acting as a full MOI backend, with direct model capabilities.
-The design is illustrated as follows:
+
+## Design
+
+ReSHOP aims at being efficient in the model transformation. In particular, most of the work is done in memory,
+as opposed to writing down the model to a file.
+
+The following figure illustrate the design and workflow of ReSHOP:
 
 ![ReSHOP architecture](./reshop_architecture.svg)
 
 The shaded blocks are the functionalities on the roadmap or work in progress.
+
+Note that the link for GAMS is done in memory, without writing a file to be parsed by the `gams` executable.
+This is also planned for the JuMP export. 
 
 ## Installing
 
@@ -64,3 +73,5 @@ Please report such bugs.
 
 ## Acknowledgements
 The MBP codepath package is heavily based on AmplNLWriter.jl
+
+*Note: This package is developed independently of the GAMS corporation*
