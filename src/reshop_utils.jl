@@ -14,7 +14,7 @@ end
 
 function reshop_set_printops(io)
     _C_PRINT = @cfunction(_c_print, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}))
-    ccall((:reshop_set_printoutops, libreshop), Cvoid, (Ref{Cvoid}, Ref{Cvoid}), pointer_from_objref(io), _C_PRINT)
+    ccall((:reshop_set_printops, libreshop), Cvoid, (Ref{Cvoid}, Ref{Cvoid}), pointer_from_objref(io), _C_PRINT)
     return
 end
 

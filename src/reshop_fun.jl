@@ -757,7 +757,7 @@ function rhp_set_option(ctx::Ptr{context}, k::String, v::Union{Cstring, String})
 end
 
 function ctx_dealloc(o::Ptr{context})
-	ccall((:hack_ctx_dealloc,  libreshop), Cvoid, (Ptr{context},), o)
+	ccall((:ctx_dealloc,  libreshop), Cvoid, (Ptr{context},), o)
 end
 
 function rhp_delete_var(ctx::Ptr{context}, vidx)

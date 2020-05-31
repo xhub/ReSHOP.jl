@@ -16,7 +16,7 @@ lp_solvers = ["baron" "knitro"]
 
 lp_exclude = Dict("knitro" => ["linear8c", "linear8b"])
 
-quad_solvers = [("baron", "local"),
+quad_solvers = [("baron", "nodual"),
                 ("knitro", ""),
                ]
 quad_exclude = Dict("baron" => ["qcp1"], # SLOW_PROGRESS
