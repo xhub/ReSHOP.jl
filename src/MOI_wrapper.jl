@@ -65,6 +65,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     quadfn_mapping::Dict{MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{Float64}, <: SS}, Cuint}
     sos_sets::Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}
     fake_cons_name::Dict{MOI.ConstraintIndex, String}
+    delvars::Set{MOI.VariableIndex}
 
     ctx::Union{Ptr{context}, Nothing}
     ctx_dest::Ptr{context}
@@ -87,7 +88,7 @@ function helper_options(ctx, options, reshop_opts::Ptr{reshop_options})
             solver_name = value
         else
             res = reshop_option_set(reshop_opts, string(name), value)
-            if (res > 0)
+            if (res != 0)
                  rhp_set_option(ctx, string(name), value)
             end
             rhp_options[string(name)] = value
@@ -110,7 +111,7 @@ function Optimizer(;options...)
                       Dict{MOI.ConstraintIndex{VOV, <: VLS}, Cuint}(), Dict{MOI.ConstraintIndex{VAF, <: VLS}, Cuint}(),
                       Dict{MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{Float64}, <: SS}, Cuint}(),
                       Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}(),
-                      Dict{MOI.ConstraintIndex,String}(),
+                      Dict{MOI.ConstraintIndex,String}(), Set{MOI.VariableIndex}(),
                       ctx, Ptr{context}(C_NULL), Ptr{reshop_model}(C_NULL), Ptr{reshop_model}(C_NULL),
                       reshop_opts, rhp_options, "", nothing, solver_name, -1, 0)
 
@@ -132,7 +133,7 @@ function MOI.copy_to(model::Optimizer, src::MOI.ModelLike; kws...)
 end
 
 # Some utilities.
-number_variables(model::Optimizer) = ctx_numvar(model.ctx)
+number_variables(model::Optimizer) = ctx_numvar(model.ctx) - length(model.delvars)
 number_constraints(model::Optimizer) = ctx_m(model.ctx)
 
 # Getter for solver's name.
@@ -217,9 +218,11 @@ end
 
 function MOI.empty!(model::Optimizer)
     ctx_dealloc(model.ctx_dest)
+    model.ctx_dest = C_NULL
     reshop_free(model.mdl)
     model.mdl = C_NULL
     reshop_free(model.mdl_solver)
+    model.mdl_solver = C_NULL
     if model.ctx != nothing
         ctx_dealloc(model.ctx)
         model.ctx = ctx_alloc()
@@ -232,6 +235,7 @@ function MOI.empty!(model::Optimizer)
     model.quadfn_mapping = Dict()
     model.sos_sets       = Dict()
     model.fake_cons_name = Dict()
+    model.delvars    = Set()
     # TODO(xhub) cleanup avar?
     # TODO(xhub) check that it is not necessary to do anything here
     #set_options(model, model.options)

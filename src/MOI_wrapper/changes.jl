@@ -1,6 +1,11 @@
 function MOI.delete(model::Optimizer, vi::MOI.VariableIndex)
     check_inbounds(model, vi)
+    if vi in model.delvars
+        throw(MOI.InvalidIndex(vi))
+    end
     rhp_delete_var(model.ctx, vi.value-1)
+    push!(model.delvars, vi)
+
 end
 
 function MOI.delete(model::Optimizer, ci::MOI.ConstraintIndex{<: Union{SF, SF}, <: LS})

@@ -37,6 +37,24 @@ end
 mutable struct filter_ops
 end
 
+
+CONE_NONE = Cint(0)          # Unset/non-existent */
+CONE_R_PLUS = Cuint(1)       # Non-negative real \f$\mathbb{R}_+\f$ */
+CONE_R_MINUS = Cuint(2)      # Non-positive real \f$\mathbb{R}_-\f$  */
+CONE_R = Cuint(3)            # Real \f$\mathbb{R}\f$ */
+CONE_0 = Cuint(4)            # Zero singleton */
+CONE_POLYHEDRAL = Cuint(5)   # Polyhedral cone */
+CONE_SOC = Cuint(6)          # Second Order cone */
+CONE_RSOC = Cuint(7)         # Rotated Second Order cone */
+CONE_EXP = Cuint(8)          # Exponential cone */
+CONE_DEXP = Cuint(9)         # Dual Exponential cone */
+CONE_POWER = Cuint(10)       # Power cone */
+CONE_DPOWER = Cuint(11)      # Dual Power cone */
+__CONES_LEN = Cuint(12)
+
+
+
+
 mutable struct option
 	name::Vector{Cchar}
 	typ::Cint
@@ -223,6 +241,23 @@ function ctx_getvarbyname(ctx::Ptr{context}, name::String)
 	return val.x
 end
 
+function ctx_getequbyname(ctx::Ptr{context}, name::String)
+	val = Ref{Cint}(-1)
+	res = ccall((:ctx_getequbyname, libreshop), Cint, (Ptr{context}, Cstring, Ptr{Cint}), ctx, name, val)
+	if res == 5
+	  return -2
+	end
+	return val.x
+end
+
+function reshop_get_equtype(ctx::Ptr{context}, idx)
+        typ = Ref{Cuint}(1000)
+	cone = Ref{Cuint}(1000)
+	res = ccall((:ctx_getequtype, libreshop), Cint, (Ptr{context}, Cint, Ref{Cuint}, Ref{Cuint}), ctx, idx, typ, cone)
+	res != 0 && error("return code $res from ReSHOP")
+	return (typ.x, cone.x)
+end
+
 function reshop_getvartype(ctx::Ptr{context}, idx)
 	typ = Ref{Cuint}(1000)
 	res = ccall((:ctx_getvartype, libreshop), Cint, (Ptr{context}, Cint, Ptr{Cuint}), ctx, idx, typ)
@@ -248,6 +283,13 @@ function ctx_getequval(ctx, idx)
 	return val.x
 end
 
+function ctx_getrhs(ctx::Ptr{context}, idx)
+	val = Ref{Cdouble}(NaN)
+	res = ccall((:ctx_getrhs, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}), ctx, idx, val)
+	res != 0 && error("return code $res from ReSHOP")
+	return val.x
+end
+
 
 function ctx_getequmult(ctx::Ptr{context}, idx)
 	val = Ref{Cdouble}(NaN)
@@ -267,6 +309,14 @@ function ctx_getequname(ctx::Ptr{context}, eidx)
 	res = ccall((:myo_get_equname, libreshop), Cstring, (Ptr{context}, Cint), ctx, eidx)
 	res != C_NULL || return ""
 	return unsafe_string(res)
+end
+
+function ctx_getequbounds(ctx::Ptr{context}, idx)
+	lb = Ref{Cdouble}(NaN)
+	ub = Ref{Cdouble}(NaN)
+	res = ccall((:ctx_getequbounds, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}, Ref{Cdouble}), ctx, idx, lb, ub)
+	res != 0 && error("return code $res from ReSHOP")
+	return (lb.x, ub.x)
 end
 
 function emp_init(mdl::Ptr{reshop_model})

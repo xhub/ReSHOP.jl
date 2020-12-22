@@ -17,7 +17,7 @@ end
 
 ##################################################
 ## Getters
-MOI.get(model::Optimizer, ::MOI.NumberOfVariables) = ctx_numvar(model.ctx)
+MOI.get(model::Optimizer, ::MOI.NumberOfVariables) = number_variables(model)
 
 function MOI.get(model::Optimizer, ::MOI.ListOfVariableIndices)
     return [MOI.VariableIndex(i) for i in 1:ctx_numvar(model.ctx)]

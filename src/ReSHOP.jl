@@ -12,13 +12,17 @@ using LinearAlgebra, SparseArrays
 
 export ReSHOPSolver, getsolvername, getsolveresult, getsolveresultnum, getsolvemessage, getsolveexitcode, LinearQuadraticModel
 
-# Load in `deps.jl`, complaining if it does not exist
-const depsjl_path = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
-if !isfile(depsjl_path)
-    error("ReSHOP not installed properly, run Pkg.build(\"ReSHOP\"), restart Julia and try again")
+if VERSION <= v"1.3.0"
+   # Load in `deps.jl`, complaining if it does not exist
+   const depsjl_path = joinpath(dirname(@__FILE__), "..", "deps", "deps.jl")
+   if !isfile(depsjl_path)
+      error("ReSHOP not installed properly, run Pkg.build(\"ReSHOP\"), restart Julia and try again")
+   end
+   include(depsjl_path)
+else
+   using ReSHOP_jll
 end
 
-include(depsjl_path)
 reshop_valid_index_max = Csize_t(0)
 
 # This is will be called immediately after the module is loaded

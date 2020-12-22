@@ -1,3 +1,8 @@
+if VERSION >= v"1.3.0"
+    return
+end
+
+
 using BinDeps
 
 @BinDeps.setup

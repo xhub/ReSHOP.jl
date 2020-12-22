@@ -270,16 +270,20 @@ end
 ##################################################
 ## ConstraintPrimal
 ## This is the value of the function at the current iterate
+function _get_equval(ctx, eidx)
+    return ctx_getequval(ctx, eidx)
+end
+
 function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal,
                  ci::MOI.ConstraintIndex{S, T}) where {S <: SF, T <: SS}
     @checkcons(model, ci)
-    return ctx_getequval(model.ctx, ci.value-1)
+    return _get_equval(model.ctx, ci.value-1)
 end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal,
                  ci::MOI.ConstraintIndex{S, T}) where {S <: VAF, T <: Union{MOI.Nonnegatives, MOI.Nonpositives}}
     @checkcons(model, ci)
-    return [ctx_getequval(model.ctx, eidx) for eidx in model.vaf_mapping[ci]]
+    return [_get_equval(model.ctx, eidx) - ctx_getrhs(model.ctx, eidx) for eidx in model.vaf_mapping[ci]]
 end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal,
@@ -327,6 +331,11 @@ function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal,
     return [ctx_getvarval(model.ctx, c.value-1) for c in ci]
 end
 
+function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal, vi::MOI.VariableIndex)
+    check_inbounds(model, vi)
+    return ctx_getvarval(model.ctx, vi.value-1)
+end
+
 ##################################################
 ## ConstraintDual
 #
@@ -349,6 +358,11 @@ function MOI.get(model::Optimizer, ::MOI.ConstraintDual,
                  ci::MOI.ConstraintIndex{S, T}) where {S <: VOV, T <: VLS}
     @checkcons(model, ci)
     return sense_to_sign(model) * [ctx_getvarmult(model.ctx, vidx) for vidx in model.vov_mapping[ci]]
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintDual, vi::MOI.VariableIndex)
+    check_inbounds(model, vi)
+    return sense_to_sign(model) * ctx_getvarmult(model.ctx, vi.value-1)
 end
 
 ###

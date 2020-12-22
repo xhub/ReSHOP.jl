@@ -202,16 +202,16 @@ end
 #end
 
 function MOI.add_constraint(model::Optimizer, vov::VOV, set::T) where T <: VLS
-    chk_var_cons(model, vv)
     vidx = convert.(Cint, [v.value for v in vov.variables] .- 1)
+    chk_var_cons.(model, vov.variables)
     bnd = zeros(Float64, length(vidx))
 
     if isa(set, MOI.Zeros)
-        ctx_setvarfx(model.ctx, vidx, bnd)
+        ctx_setvarfx.(model.ctx, vidx, bnd)
     elseif isa(set, MOI.Nonnegatives)
-        ctx_setvarlb(model.ctx, vidx, bnd)
+        ctx_setvarlb.(model.ctx, vidx, bnd)
     elseif isa(set, MOI.Nonpositives)
-        ctx_setvarub(model.ctx, vidx, bnd)
+        ctx_setvarub.(model.ctx, vidx, bnd)
     end
 
     # TODO is this necessary?
@@ -465,14 +465,29 @@ function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{MOI.SingleVariab
     return reshop_getvartype(model.ctx, ci.value-1) == RHP_VARTYPE_SI
 end
 
+function MOI.is_valid(model::Optimizer, ci::MOI.ConstraintIndex{VOV, <:VLS})
+    allvars = get(model.vov_mapping, ci, Cuint[])
+    if length(allvars) == 0
+        return false
+    end
+
+    return !any([MOI.VariableIndex(1+vi) in model.delvars for vi in allvars])
+end
+
 ##################################################
 ## Constraint naming
 # TODO
 function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex{<:SF,<:LS}, name::String)
+    println("saving constraint named $name at index $(ci.value)")
+    ctx_setequname(model.ctx, ci.value-1, name)
+end
+
+function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex{MOI.SingleVariable,<:SS}, name::String)
     ctx_setequname(model.ctx, ci.value-1, name)
 end
 
 function MOI.set(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex, name::String)
+    println("unsupported constraint named $name at index $(ci.value) of type $ci")
     model.fake_cons_name[ci] = name
 end
 
@@ -482,4 +497,14 @@ end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex)
     return get(model.fake_cons_name, ci, "")
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, ci::MOI.ConstraintIndex{MOI.SingleVariable,<: SS})
+    MOI.throw_if_not_valid(m, ci)
+    return MOI.SingleVariable(MOI.VariableIndex(ci.value))
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{MOI.SingleVariable,S}) where S <: SS
+    MOI.throw_if_not_valid(m, ci)
+    return S()
 end

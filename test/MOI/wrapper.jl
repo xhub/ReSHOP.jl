@@ -70,6 +70,21 @@ const OPTIMIZER = ReSHOP.Optimizer(; optimizer_kw...)
 #    end
 end
 
+#@testset "MOI Basic constraint test" begin
+#    MOIT.basic_constraint_tests(ReSHOP.Optimizer(), config, get_constraint_function=false, get_constraint_set=false)
+#end
+
+@testset "MOI unit test" begin
+
+    model = ReSHOP.Optimizer(solver="cplex")
+    exclude = ["number_threads",
+			  "solve_with_lowerbound", # c1 is not registered
+				"solve_singlevariable_obj", # problem with dual constraint value
+			  ]
+
+    MOI.Test.unittest(model, config, exclude)
+end
+
 @testset "MOI Linear tests" begin
     @testset "using $lp_solver" for lp_solver in lp_solvers
     optimizer = ReSHOP.Optimizer(solver=lp_solver; optimizer_kw...)

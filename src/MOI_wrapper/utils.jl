@@ -93,7 +93,7 @@ end
 # Copyright (c) 2017 Oscar Dowson, Joaquim Dias Garcia and contributors
 ##################################################
 
-function reduce_duplicates!(rows::Vector{T}, cols::Vector{T}, vals::Vector{S}) where T where S
+function reduce_duplicates(rows::Vector{T}, cols::Vector{T}, vals::Vector{S}) where T where S
     @assert length(rows) == length(cols) == length(vals)
     for i in 1:length(rows)
         if rows[i] > cols[i]
@@ -102,7 +102,7 @@ function reduce_duplicates!(rows::Vector{T}, cols::Vector{T}, vals::Vector{S}) w
             cols[i] = tmp
         end
     end
-    return findnz(sparse(rows, cols, vals))
+    findnz(dropzeros!(sparse(rows, cols, vals)))
 end
 
 """
@@ -130,8 +130,8 @@ function canonical_quadratic_reduction(func::MOI.ScalarQuadraticFunction)
             quad_coefficients[i] *= .5
         end
     end
-    reduce_duplicates!(quad_columns_1, quad_columns_2, quad_coefficients)
-    return (quad_columns_1 .- 1., quad_columns_2 .- 1., quad_coefficients)
+    r, c, v = reduce_duplicates(quad_columns_1, quad_columns_2, quad_coefficients)
+    return (r .- 1., c .- 1., v)
 end
 
 """
@@ -146,13 +146,16 @@ Warning: we assume in this function that all variables are correctly
 ordered, that is no deletion or swap has occured.
 """
 function canonical_linear_reduction(func::MOI.ScalarQuadraticFunction)
-    affine_columns = Int32[term.variable_index.value - 1 for term in func.affine_terms]
-    affine_coefficients = [term.coefficient for term in func.affine_terms]
+    f = MOIU.canonical(func)
+    affine_columns = Int32[term.variable_index.value - 1 for term in f.affine_terms]
+    affine_coefficients = [term.coefficient for term in f.affine_terms]
     return affine_columns, affine_coefficients
 end
+
 function canonical_linear_reduction(func::MOI.ScalarAffineFunction)
-    affine_columns = Int32[term.variable_index.value - 1 for term in func.terms]
-    affine_coefficients = [term.coefficient for term in func.terms]
+    f = MOIU.canonical(func)
+    affine_columns = Int32[term.variable_index.value - 1 for term in f.terms]
+    affine_coefficients = [term.coefficient for term in f.terms]
     return affine_columns, affine_coefficients
 end
 
