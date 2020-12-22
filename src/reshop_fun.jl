@@ -603,8 +603,9 @@ function rhp_equ_add_quadratic(ctx::Ptr{context}, eidx, vidx1, vidx2, coeffs)
 	vidx1C = Vector{Cint}(vidx1)
 	vidx2C = Vector{Cint}(vidx2)
 	@assert length(vidx1) == length(vidx2) == length(coeffs)
-	res = ccall((:rhp_add_equ_quad, libreshop), Cint, (Ptr{context}, Cint, Csize_t, Ptr{Cint}, Ptr{Cint}, Ptr{Cdouble}, Cdouble),
-							ctx, eidx, length(vidx1C), vidx1C, vidx2C, coeffs, 1.)
+	res = ccall((:rhp_equ_addquadabsolute, libreshop), Cint,
+		    (Ptr{context}, Cint, Csize_t, Ptr{Cint}, Ptr{Cint}, Ptr{Cdouble}, Cdouble),
+		    ctx, eidx, length(vidx1C), vidx1C, vidx2C, coeffs, 1.)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -616,7 +617,7 @@ function reshop_mat_coo(ridx, cidx, vals)
 	# beaware of dragons! --xhub
 	ridxC = Vector{Cint}(ridx)
 	cidxC = Vector{Cint}(cidx)
-	mat = ccall((:rhp_mat_triplet, libreshop), Ptr{reshop_sp_matrix}, (Cuint, Cuint, Cuint, Ptr{Cint}, Ptr{Cint}, Ref{Cdouble}),
+	mat = ccall((:rhp_mat_triplet, libreshop), Ptr{reshop_sp_matrix}, (Cuint, Cuint, Csize_t, Ptr{Cint}, Ptr{Cint}, Ref{Cdouble}),
 							0, 0, length(vals), ridxC, cidxC, vals)
 	return mat
 end
