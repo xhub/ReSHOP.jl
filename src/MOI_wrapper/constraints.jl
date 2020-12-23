@@ -500,11 +500,6 @@ function MOI.get(model::Optimizer, ::MOI.ConstraintName, ci::MOI.ConstraintIndex
 end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, ci::MOI.ConstraintIndex{MOI.SingleVariable,<: SS})
-    MOI.throw_if_not_valid(m, ci)
+    MOI.throw_if_not_valid(model, ci)
     return MOI.SingleVariable(MOI.VariableIndex(ci.value))
-end
-
-function MOI.get(model::Optimizer, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex{MOI.SingleVariable,S}) where S <: SS
-    MOI.throw_if_not_valid(m, ci)
-    return S()
 end
