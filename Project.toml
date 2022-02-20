@@ -4,7 +4,7 @@ license = "MIT"
 desc = "Reformulation Solver for Hierachical Optimization Problem"
 repo = "https://github.com/xhub/ReSHOP.jl.git"
 authors = ["Olivier Huber <oli.huber@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
