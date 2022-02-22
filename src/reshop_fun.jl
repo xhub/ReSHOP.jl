@@ -655,6 +655,17 @@ function reshop_set_rhs(ctx::Ptr{context}, idx, val)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
+function reshop_set_cst(ctx::Ptr{context}, idx, val)
+	res = ccall((:rhp_equ_setcst, libreshop), Cint, (Ptr{context}, Cint, Cdouble), ctx, idx, val)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
+function rhp_set_perp(ctx::Ptr{context}, ei, vi)
+	res = ccall((:ctx_setperp, libreshop), Cint, (Ptr{context}, RHP_IDXT, RHP_IDXT), ctx, ei, vi)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
+
 function reshop_set_equtype(ctx::Ptr{context}, idx, cone)
 	res = ccall((:ctx_setequtype, libreshop), Cint, (Ptr{context}, Cint, Cuint, Cuint), ctx, idx, 2, cone)
 	res != 0 && error("return code $res from ReSHOP")

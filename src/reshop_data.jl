@@ -1,3 +1,6 @@
+
+const RHP_IDXT                = Cint
+
 const RHP_VARTYPE_X           = Cuint(0)   # continuous variable
 const RHP_VARTYPE_B           = Cuint(1)   # binary variable
 const RHP_VARTYPE_I           = Cuint(2)   # integer variable

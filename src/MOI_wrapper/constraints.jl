@@ -240,6 +240,85 @@ function MOI.add_constraint(model::Optimizer, vov::VOV, set::MOI.SecondOrderCone
     return ci
 end
 
+function MOI.add_constraint(model::Optimizer, vaf::VAF, set::MOI.Complements)
+
+    # the vaf needs to be parsed
+    idxs, vars, coeffs = canonical_vector_affine_reduction(func)
+    # TODO: for 0.22, we must set dim to set.dimension/2
+    dim = set.dimension
+
+    rhp_vars = Vector{RHP_IDXT}(undef, dim)
+    equs = Vector{Tuple(Vector{RHP_IDXT},Vector{Float64})}(undef, dim)
+
+    for i in 1:dim
+        equs[i] = (Vector{RHP_IDXT}(undef, 0), Vector{Float64}(undef, 0))
+    end
+
+    for (idx, var, coeff) in zip(idxs, vars, coeffs)
+        # past dim, we have the complementary variable
+        if idx >= dim
+            rhp_vars[idx-dim] = var
+         else
+            push!(equs[idx][1], var)
+            push!(equs[idx][2], coeff)
+        end
+    end
+
+    # Now we define all the equations
+    avar = _ensure_avar(model)
+    current_m = ctx_numequ(model.ctx)
+    # Add constraints inside ReSHOP.
+    rhp_add_equs(model.ctx, dim)
+
+    # Add all relations
+    for i in 1:dim
+        ei = current_m+i-1
+        vidx, coeffs = equs[i]
+        rhp_avar_set(avar, vidx)
+        rhp_equ_add_linear(model.ctx, ei, avar, coeffs)
+        reshop_set_cst(model.ctx, ei, vaf.constants[i])
+        rhp_set_perp(model.ctx, ei, vi)
+    end
+
+
+   # Add constraints to index.
+    # The index of the t variable is used, since the multiplier
+    # would only be defined for it.
+    ci = MOI.ConstraintIndex{typeof(func), typeof(set)}(current_m+1)
+#    model.vov_mapping[ci] = 
+    return ci
+end
+
+function MOI.add_constraint(model::Optimizer, vov::VOV, set::MOI.Complements)
+
+    # TODO: for 0.22, we must set dim to set.dimension/2
+    dim = set.dimension
+
+    rhp_vars = RHP_IDXT[vi-1 for vi in vov.variables]
+
+    # Now we define all the equations
+    current_m = ctx_numequ(model.ctx)
+    # Add constraints inside ReSHOP
+    rhp_add_equs(model.ctx, dim)
+
+    # Add all relations
+    for i in 1:dim
+        ei = current_m+i-1
+        vi_fn = rhp_vars[i]
+        vi = rhp_vars[i+dim]
+        ctx_add_lin_var(model.ctx, ei, vi, 1.)
+        rhp_set_perp(model.ctx, ei, vi)
+    end
+
+
+    # Add constraints to index.
+    # The index of the t variable is used, since the multiplier
+    # would only be defined for it.
+    ci = MOI.ConstraintIndex{VOV, typeof(set)}(current_m+1)
+    model.vov_mapping[ci] = current_m+1
+    return ci
+end
+
 function MOI.add_constraint(model::Optimizer, vov::VOV,
                             set::Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}})
     @assert length(vov.variables) == length(set.weights)
