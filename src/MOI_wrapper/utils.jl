@@ -7,7 +7,7 @@ function _ensure_avar(model)
 end
 
 
-function _set_rhs(model::Optimizer, eidx, fn_cst, set::LS)
+function _set_cst(model::Optimizer, eidx, fn_cst, set::LS)
     # Add bound to constraint.
     if isa(set, MOI.LessThan{Float64})
         val = set.upper
@@ -18,18 +18,17 @@ function _set_rhs(model::Optimizer, eidx, fn_cst, set::LS)
     end
 
     # Set the rhs
-    reshop_set_rhs(model.ctx, eidx, val - fn_cst)
     reshop_set_equtype(model.ctx, eidx, set_to_reshop[typeof(set)])
+    reshop_set_cst(model.ctx, eidx, fn_cst - val)
 
 end
 
-function _set_rhs(model::Optimizer, eidx, fn_cst, set::VLS)
+function _set_cst(model::Optimizer, eidx, fn_cst, set::VLS)
     # Add bound to constraint.
 
     # Set the rhs
-    reshop_set_rhs(model.ctx, eidx, - fn_cst)
     reshop_set_equtype(model.ctx, eidx, set_to_reshop[typeof(set)])
-
+    reshop_set_cst(model.ctx, eidx, fn_cst)
 end
 
 function get_status(ctx::Ptr{context})
@@ -37,10 +36,36 @@ function get_status(ctx::Ptr{context})
             model_stat[rhp_get_modelstat(ctx)])
 end
 
-function is_valid_index(idx::Cint)
+function is_valid_index(idx::RHP_IDXT)
     return idx >= 0
 end
 
+# Adding the constant part requires setting the equation type
+function rhp_addequ_nocst(ctx, avar, func::MOI.ScalarAffineFunction)
+  eidx = rhp_add_equ(ctx)
+  lvidx, lcoefs = canonical_linear_reduction(func)
+  rhp_avar_set(avar, lvidx)
+  rhp_equ_add_linear(ctx, eidx, avar, lcoefs)
+  return eidx
+end
+
+function rhp_addequ_nocst(ctx, avar, func::MOI.ScalarQuadraticFunction)
+    eidx = rhp_add_equ(ctx)
+    # We parse the expression passed in arguments.
+    qvidx1, qvidx2, qcoefs = canonical_quadratic_reduction(func)
+    lvidx, lcoefs = canonical_linear_reduction(func)
+    rhp_equ_add_quadratic(ctx, eidx, qvidx1, qvidx2, qcoefs)
+    rhp_avar_set(avar, lvidx)
+    rhp_equ_add_linear_chk(ctx, eidx, avar, lcoefs)
+    return eidx
+end
+
+function rhp_addequ_nocst(ctx, avar, var::MOI.SingleVariable)
+    eidx = rhp_add_equ(ctx)
+    rhp_avar_set(avar, var.variable.value - 1)
+    rhp_equ_add_linear(ctx, eidx, avar, [1.,])
+    return eidx
+end
 
 function is_constraint_active(ctx::Ptr{context}, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
      return true
@@ -76,9 +101,10 @@ function is_constraint_active(ctx::Ptr{context}, ci::MOI.ConstraintIndex{<:SF, M
      return bstat == RHP_BASIS_STATUS_LOWER || bstat == RHP_BASIS_STATUS_UPPER
 end
 
-function reset_var_bnd(ctx::Ptr{context}, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Float64}})
-     ctx
-end
+# TODO: fix this
+#function reset_var_bnd(ctx::Ptr{context}, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{Float64}})
+#     ctx
+#end
 
 # Utils for MathOptInterface
 #
@@ -119,14 +145,14 @@ ordered, that is no deletion or swap has occured.
 """
 function canonical_quadratic_reduction(func::MOI.ScalarQuadraticFunction)
     quad_columns_1, quad_columns_2, quad_coefficients = (
-        Int32[term.variable_index_1.value for term in func.quadratic_terms],
-        Int32[term.variable_index_2.value for term in func.quadratic_terms],
+        RHP_IDXT[term.variable_index_1.value for term in func.quadratic_terms],
+        RHP_IDXT[term.variable_index_2.value for term in func.quadratic_terms],
         [term.coefficient for term in func.quadratic_terms]
     )
     # MOI stores the diagonal element with a coefficient of 2.
     # This is most likely very smart for derivative, but it is not a panacee
     for i in 1:length(quad_coefficients)
-        @inbounds if quad_columns_1[i] == quad_columns_2[i]
+        if quad_columns_1[i] == quad_columns_2[i]
             quad_coefficients[i] *= .5
         end
     end
@@ -147,27 +173,34 @@ ordered, that is no deletion or swap has occured.
 """
 function canonical_linear_reduction(func::MOI.ScalarQuadraticFunction)
     f = MOIU.canonical(func)
-    affine_columns = Int32[term.variable_index.value - 1 for term in f.affine_terms]
+    affine_columns = RHP_IDXT[term.variable_index.value - 1 for term in f.affine_terms]
     affine_coefficients = [term.coefficient for term in f.affine_terms]
     return affine_columns, affine_coefficients
 end
 
 function canonical_linear_reduction(func::MOI.ScalarAffineFunction)
     f = MOIU.canonical(func)
-    affine_columns = Int32[term.variable_index.value - 1 for term in f.terms]
+    affine_columns = RHP_IDXT[term.variable_index.value - 1 for term in f.terms]
     affine_coefficients = [term.coefficient for term in f.terms]
     return affine_columns, affine_coefficients
 end
 
 function canonical_vector_affine_reduction(func::MOI.VectorAffineFunction)
-    index_cols = Int32[]
-    index_vars = Int32[]
-    coefs = Float64[]
+    index_cols = RHP_IDXT[]
+    index_vars = RHP_IDXT[]
+    coeffs = Float64[]
 
     for t in func.terms
         push!(index_cols, t.output_index - 1)
         push!(index_vars, t.scalar_term.variable_index.value - 1)
-        push!(coefs, t.scalar_term.coefficient)
+        push!(coeffs, t.scalar_term.coefficient)
     end
-    return index_cols, index_vars, coefs
+    return index_cols, index_vars, coeffs
+end
+
+function get_solverstack(model::Optimizer)
+  solver_stack = model.solver_stack
+  if solver_stack == ""
+    solver_stack = global_solverstack
+  end
 end

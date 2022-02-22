@@ -283,7 +283,7 @@ end
 function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal,
                  ci::MOI.ConstraintIndex{S, T}) where {S <: VAF, T <: Union{MOI.Nonnegatives, MOI.Nonpositives}}
     @checkcons(model, ci)
-    return [_get_equval(model.ctx, eidx) - ctx_getrhs(model.ctx, eidx) for eidx in model.vaf_mapping[ci]]
+    return [_get_equval(model.ctx, eidx) + ctx_getcst(model.ctx, eidx) for eidx in model.vaf_mapping[ci]]
 end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintPrimal,

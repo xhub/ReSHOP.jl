@@ -56,10 +56,6 @@ function load_nlp_constraints(model::Optimizer, nlp_data::MOI.NLPBlockData)
         lin_part = Dict{Int32, Float64}()
         c, constant, conlinearities = process_expression!(c, lin_part)
 
-        # Update bounds on constraint
-        lb -= constant
-        ub -= constant
-
         eidx = rhp_add_equ(model.ctx)
 
         tree, node = reshop_get_treedata(model.ctx, eidx)
@@ -71,8 +67,7 @@ function load_nlp_constraints(model::Optimizer, nlp_data::MOI.NLPBlockData)
             rhp_equ_add_linear_chk(model.ctx, eidx, avar, collect(values(lin_part)))
         end
         reshop_set_equtype(model.ctx, eidx, relation_to_reshop[rel])
-        isfinite(lb) && reshop_set_rhs(model.ctx, eidx, lb)
-        isfinite(ub) && reshop_set_rhs(model.ctx, eidx, ub)
+        isfinite(constant) && reshop_set_cst(model.ctx, eidx, constant)
     end
 
  end

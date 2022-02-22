@@ -237,14 +237,14 @@ function reshop_add_contraint_sense(ctx, m::ReSHOPMathProgBaseModel, offset)
         end
         eidx = m.nonquad_idx[idx] + offset - 1 + m.offset
         CONFIG[:debug] && println("Setting sense and rhs for equation $eidx: $rel $value")
-        reshop_set_rhs(ctx, eidx, value)
+        reshop_set_cst(ctx, eidx, -value)
         reshop_set_equtype(ctx, eidx, rel)
     end
 
     for (idx, equ) in enumerate(m.quad_equs)
         rel, value = equ[end-1:end]
         eidx = m.quad_idx[idx] + offset - 1 + m.offset
-        reshop_set_rhs(ctx, eidx, value)
+        reshop_set_cst(ctx, eidx, -value)
         reshop_set_equtype(ctx, eidx, relation_to_reshop[rel])
     end
 end

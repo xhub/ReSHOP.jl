@@ -6,6 +6,8 @@ MOI.supports_constraint(::Optimizer, ::Type{<:ALLV}, ::Type{<:NCS}) = true
 MOI.supports_constraint(::Optimizer, ::Type{<:SF}, ::Type{<:LS}) = true
 MOI.supports_constraint(::Optimizer, ::Type{VAF}, ::Type{<:VLS}) = true
 MOI.supports_constraint(::Optimizer, ::Type{VOV}, ::Type{<:VLS}) = true
+MOI.supports_constraint(::Optimizer, ::Type{VOV}, ::Type{MOI.Complements}) = true
+MOI.supports_constraint(::Optimizer, ::Type{VAF}, ::Type{MOI.Complements}) = true
 
 # TODO:
 MOI.supports(::Optimizer, ::MOI.ConstraintName, ::Type{MOI.ConstraintIndex}) = false

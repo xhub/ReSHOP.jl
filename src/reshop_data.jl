@@ -1,3 +1,21 @@
+
+# Type of the equation and variable indices
+const RHP_IDXT                = Cint
+
+# Model types
+const RHP_MDL_GAMS            = Cuint(0)  # GAMS context
+const RHP_MDL_RHP             = Cuint(1)  # internal context
+const RHP_MDL_JULIA           = Cuint(2)  # Julia context
+const RHP_MDL_AMPL            = Cuint(3)  # AMPL context
+
+
+# Mapping types
+const RHP_EQ_UNSET            = Cuint(0)  #  Equation type unset 
+const RHP_EQ_MAPPING          = Cuint(1)  #  Mapping (objective fn, functional part of VI, ...)
+const RHP_EQ_CONE_INCLUSION   = Cuint(2)  #  Inclusion in a cone (usual constraint) 
+const RHP_EQ_BOOLEAN          = Cuint(3)  #  Boolean relation 
+
+# Variable types
 const RHP_VARTYPE_X           = Cuint(0)   # continuous variable
 const RHP_VARTYPE_B           = Cuint(1)   # binary variable
 const RHP_VARTYPE_I           = Cuint(2)   # integer variable
@@ -15,6 +33,7 @@ const RHP_VARTYPE_POWER       = Cuint(13)  # variable in a POWER cone
 const RHP_VARTYPE_DPOWER      = Cuint(14)  # variable in a dual POWER cone
 
 
+const RHP_CONE_NONE         = Cuint(0)    # Unset/non-existent */
 const RHP_CONE_R_PLUS       = Cuint(1)    # Non-negative real \f$\mathbb{R}_+\f$ */
 const RHP_CONE_R_MINUS      = Cuint(2)    # Non-positive real \f$\mathbb{R}_-\f$  */
 const RHP_CONE_R            = Cuint(3)    # Real \f$\mathbb{R}\f$ */

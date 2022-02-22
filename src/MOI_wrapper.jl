@@ -60,8 +60,8 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     sense::MOI.OptimizationSense
     status::Cint
 
-    vov_mapping::Dict{MOI.ConstraintIndex{VOV, <: Union{VLS, MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Vector{Cuint}}
-    vaf_mapping::Dict{MOI.ConstraintIndex{VAF, <: VLS}, Vector{Cuint}}
+    vov_mapping::Dict{MOI.ConstraintIndex{VOV, <: Union{VLS, MOI.SOS1{Float64}, MOI.SOS2{Float64}, MOI.Complements}}, Vector{Cuint}}
+    vaf_mapping::Dict{MOI.ConstraintIndex{VAF, <: Union{VLS, MOI.Complements}}, Vector{Cuint}}
     quadfn_mapping::Dict{MOI.ConstraintIndex{MOI.ScalarQuadraticFunction{Float64}, <: SS}, Cuint}
     sos_sets::Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}
     fake_cons_name::Dict{MOI.ConstraintIndex, String}
@@ -76,25 +76,30 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     gams_dir::String
     avar_cache::Union{Ptr{abstract_var}, Nothing}
     solver_name::String
+    solver_stack::String
     start_nl_cons::Int
     len_nl_cons::Cuint
 end
 
 function helper_options(ctx, options, reshop_opts::Ptr{reshop_options})
     solver_name = ""
+    solver_stack = ""
     rhp_options = Dict{String, Union{Cdouble, Cint, Bool, Cstring, String}}()
     for (name, value) in options
-        if string(name) == "solver"
+        sname = string(name)
+        if sname == "solver"
             solver_name = value
+        elseif sname == "solver_stack"
+            solver_stack = value
         else
-            res = reshop_option_set(reshop_opts, string(name), value)
+            res = reshop_option_set(reshop_opts, sname, value)
             if (res != 0)
-                 rhp_set_option(ctx, string(name), value)
+                 rhp_set_option(ctx, sname, value)
             end
-            rhp_options[string(name)] = value
+            rhp_options[sname] = value
         end
     end
-    return (solver_name, rhp_options)
+    return (solver_name, solver_stack, rhp_options)
 end
 
 function Optimizer(;options...)
@@ -105,7 +110,7 @@ function Optimizer(;options...)
     # TODO this is quite a hack just for the "output" option.
     # Refactoring option in ReSHOP will enable us to move on
     reshop_opts = reshop_options_alloc()
-    solver_name, rhp_options = helper_options(ctx, options, reshop_opts)
+    solver_name, solver_stack, rhp_options = helper_options(ctx, options, reshop_opts)
 
     model = Optimizer(0, MOI.FEASIBILITY_SENSE, 0,
                       Dict{MOI.ConstraintIndex{VOV, <: VLS}, Cuint}(), Dict{MOI.ConstraintIndex{VAF, <: VLS}, Cuint}(),
@@ -113,7 +118,7 @@ function Optimizer(;options...)
                       Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}(),
                       Dict{MOI.ConstraintIndex,String}(), Set{MOI.VariableIndex}(),
                       ctx, Ptr{context}(C_NULL), Ptr{reshop_model}(C_NULL), Ptr{reshop_model}(C_NULL),
-                      reshop_opts, rhp_options, "", nothing, solver_name, -1, 0)
+                      reshop_opts, rhp_options, "", nothing, solver_name, solver_stack, -1, 0)
 
     finalizer(MOI.empty!, model)
     return model
@@ -203,12 +208,22 @@ function MOI.optimize!(model::Optimizer)
         end
     end
     # TODO check if gams_dir and ctx_dest already exists, do not reallocate then.
-    model.ctx_dest, model.gams_dir = reshop_setup_gams()
+
+    solver_stack = get_solverstack(model)
+
+    if solver_stack == "GAMS"
+      model.ctx_dest, model.gams_dir = reshop_setup_gams()
+    elseif solver_stack == "RESHOP"
+      model.ctx_dest = reshop_setup_ownsolver()
+    else
+      error("Unsupported solver stack $solver_stack")
+    end
 
     # Calling from emp, we already have a mdl object
     if model.mdl == C_NULL
         model.mdl = reshop_alloc(model.ctx)
     end
+
     model.mdl_solver = reshop_alloc(model.ctx_dest)
     model.status = reshop_solve(model.mdl, model.mdl_solver, model.ctx_dest, model.solver_name)
     reshop_postprocess(model.mdl_solver)
@@ -223,6 +238,7 @@ function MOI.empty!(model::Optimizer)
     model.mdl = C_NULL
     reshop_free(model.mdl_solver)
     model.mdl_solver = C_NULL
+
     if model.ctx != nothing
         ctx_dealloc(model.ctx)
         model.ctx = ctx_alloc()

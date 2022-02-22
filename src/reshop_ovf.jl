@@ -10,4 +10,10 @@ function reshop_ovf(mdl, ovf)
     end
 
     emp_ovf_check(ovf_def)
+    return ovf_def
+end
+
+function ovf_setreformulation(ovf_def, reformulation)
+  rhp_ovf_setreformulation(ovf_def, reformulation)
+  return
 end

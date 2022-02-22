@@ -38,22 +38,6 @@ mutable struct filter_ops
 end
 
 
-CONE_NONE = Cint(0)          # Unset/non-existent */
-CONE_R_PLUS = Cuint(1)       # Non-negative real \f$\mathbb{R}_+\f$ */
-CONE_R_MINUS = Cuint(2)      # Non-positive real \f$\mathbb{R}_-\f$  */
-CONE_R = Cuint(3)            # Real \f$\mathbb{R}\f$ */
-CONE_0 = Cuint(4)            # Zero singleton */
-CONE_POLYHEDRAL = Cuint(5)   # Polyhedral cone */
-CONE_SOC = Cuint(6)          # Second Order cone */
-CONE_RSOC = Cuint(7)         # Rotated Second Order cone */
-CONE_EXP = Cuint(8)          # Exponential cone */
-CONE_DEXP = Cuint(9)         # Dual Exponential cone */
-CONE_POWER = Cuint(10)       # Power cone */
-CONE_DPOWER = Cuint(11)      # Dual Power cone */
-__CONES_LEN = Cuint(12)
-
-
-
 
 mutable struct option
 	name::Vector{Cchar}
@@ -98,8 +82,8 @@ function rhp_equ_add_linear_chk(ctx::Ptr{context}, eidx, avar::Ptr{abstract_var}
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function ctx_alloc()
-	ctx = ccall((:ctx_alloc, libreshop), Ptr{context}, (Cuint,), 2)
+function ctx_alloc(mdl_type=RHP_MDL_JULIA)
+	ctx = ccall((:ctx_alloc, libreshop), Ptr{context}, (Cuint,), mdl_type)
 	if ctx == Ptr{context}(C_NULL)
 		error("Could not allocate a context")
 	end
@@ -146,24 +130,25 @@ function ctx_numequ(ctx::Ptr{context})
 end
 
 function ctx_setequname(ctx, eidx, name::String)
-	res = ccall((:myo_set_equname, libreshop), Cint, (Ptr{context}, Cint, Cstring), ctx, eidx, name)
+	res = ccall((:ctx_setequname, libreshop), Cint, (Ptr{context}, Cint, Cstring), ctx, eidx, name)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function ctx_setvarnames(ctx, names::Vector{String})
-	res = ccall((:myo_set_varnames, libreshop), Cint, (Ptr{context}, Ptr{Ptr{Cchar}}, Cuint), ctx, names, length(names))
-	res != 0 && error("return code $res from ReSHOP")
+  error("Unsupported function")
 end
 
 function ctx_setvarname(ctx, vidx, name::String)
-	res = ccall((:myo_set_varname, libreshop), Cint, (Ptr{context}, Cint, Cstring), ctx, vidx, name)
+	res = ccall((:ctx_setvarname, libreshop), Cint, (Ptr{context}, Cint, Cstring), ctx, vidx, name)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function ctx_getvarname(ctx, vidx)
-	res = ccall((:myo_get_varname, libreshop), Cstring, (Ptr{context}, Cint), ctx, vidx)
-	res != C_NULL || return ""
-	return unsafe_string(res)
+function ctx_getvarname(ctx, vi)
+	name = Ref{Cstring}(C_NULL)
+	res = ccall((:ctx_getvarname, libreshop), Cint, (Ptr{context}, Cint, Ref{Cstring}), ctx, vi, name)
+#	res != 0 && error("return code $res from ReSHOP")
+	res != 0 && return ""
+	return unsafe_string(name.x)
 end
 
 function hack_last_vidx(ctx::Ptr{context})
@@ -223,15 +208,6 @@ function ctx_getvarmult(ctx::Ptr{context}, idx)
 	return val.x
 end
 
-#function ctx_getvarname(ctx::Ptr{context}, idx)
-#	len = 1024
-#	buf = Vector{UInt8}(undef, len)
-#	res = ccall((:ctx_getvarname, libreshop), Cint, (Ptr{context}, Cint, Ptr{UInt8}, Cuint), ctx, idx, buf, len)
-#	res != 0 && error("return code $res from ReSHOP")
-#	e = findfirst(isequal(0), buf)
-#	return String(buf[1:e])
-#end
-
 function ctx_getvarbyname(ctx::Ptr{context}, name::String)
 	val = Ref{Cint}(-1)
 	res = ccall((:ctx_getvarbyname, libreshop), Cint, (Ptr{context}, Cstring, Ptr{Cint}), ctx, name, val)
@@ -283,9 +259,9 @@ function ctx_getequval(ctx, idx)
 	return val.x
 end
 
-function ctx_getrhs(ctx::Ptr{context}, idx)
+function ctx_getcst(ctx::Ptr{context}, idx)
 	val = Ref{Cdouble}(NaN)
-	res = ccall((:ctx_getrhs, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}), ctx, idx, val)
+	res = ccall((:ctx_getcst, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}), ctx, idx, val)
 	res != 0 && error("return code $res from ReSHOP")
 	return val.x
 end
@@ -305,10 +281,12 @@ function ctx_getequbstat(ctx::Ptr{context}, idx)
 	return val.x
 end
 
-function ctx_getequname(ctx::Ptr{context}, eidx)
-	res = ccall((:myo_get_equname, libreshop), Cstring, (Ptr{context}, Cint), ctx, eidx)
-	res != C_NULL || return ""
-	return unsafe_string(res)
+function ctx_getequname(ctx::Ptr{context}, ei)
+	name = Ref{Cstring}(C_NULL)
+	res = ccall((:ctx_getequname, libreshop), Cint, (Ptr{context}, Cint, Ref{Cstring}), ctx, ei, name)
+#	res != 0 && error("return code $res from ReSHOP")
+	res != 0 && return ""
+	return unsafe_string(name.x)
 end
 
 function ctx_getequbounds(ctx::Ptr{context}, idx)
@@ -329,12 +307,12 @@ function emp_create_equil(max_mp)
 end
 
 function emp_add_mp_mp(mp_parent, mp)
-	res = ccall((:mathprgm_addmp, libreshop), Cint, (Ptr{mathprgm}, Ptr{mathprgm}), mp_parent, mp)
+	res = ccall((:rhp_mp_addmp, libreshop), Cint, (Ptr{mathprgm}, Ptr{mathprgm}), mp_parent, mp)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_add_mp_equil(mp_parent, mpe)
-	res = ccall((:mathprgm_addequil, libreshop), Cint, (Ptr{mathprgm}, Ptr{equil}), mp_parent, mpe)
+	res = ccall((:rhp_mp_addequil, libreshop), Cint, (Ptr{mathprgm}, Ptr{equil}), mp_parent, mpe)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -357,55 +335,60 @@ function emp_mp_ensure(mdl::Ptr{reshop_model}, nb)
 end
 
 function emp_mp_alloc(mdl::Ptr{reshop_model})
-	mp = ccall((:mathprgm_alloc, libreshop), Ptr{mathprgm}, (Ptr{reshop_model},), mdl)
+	mp = ccall((:rhp_mp_alloc, libreshop), Ptr{mathprgm}, (Ptr{reshop_model},), mdl)
 	return mp
 end
 
 function emp_mp_start(mp, typ)
-	res = ccall((:mathprgm_addstart, libreshop), Cint, (Ptr{mathprgm}, Cuint), mp, typ)
+	res = ccall((:rhp_mp_start, libreshop), Cint, (Ptr{mathprgm}, Cuint), mp, typ)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function emp_mp_objdir(mp, sense)
-	res = ccall((:mathprgm_addobjdir, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, sense_to_reshop[sense])
+function emp_mp_setsense(mp, sense)
+	res = ccall((:rhp_mp_setsense, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, sense_to_reshop[sense])
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_mp_objequ(mp, idx)
-	res = ccall((:mathprgm_addobjequ, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
+	res = ccall((:rhp_mp_setobjequ, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_mp_objvar(mp, idx)
-	res = ccall((:mathprgm_addobjvar, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
+	res = ccall((:rhp_mp_setobjvar, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_mp_var(mp, idx)
-	res = ccall((:mathprgm_addvar, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
+	res = ccall((:rhp_mp_addvar, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
+function emp_mp_addequ(mp, ei)
+	res = ccall((:rhp_mp_addequ, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, ei)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_mp_constraint(mp, idx)
-	res = ccall((:mathprgm_addconstraint, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
+	res = ccall((:rhp_mp_addconstraint, libreshop), Cint, (Ptr{mathprgm}, Cint), mp, idx)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_mp_vipair(mp, eidx, vidx)
-	res = ccall((:mathprgm_addvipair, libreshop), Cint, (Ptr{mathprgm}, Cint, Cint), mp, eidx, vidx)
+	res = ccall((:rhp_mp_addvipair, libreshop), Cint, (Ptr{mathprgm}, Cint, Cint), mp, eidx, vidx)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function emp_mp_getobjvar(mp)
-	return ccall((:mathprgm_getobjvar, libreshop), Cint, (Ptr{mathprgm},), mp)
+	return ccall((:rhp_mp_getobjvar, libreshop), Cint, (Ptr{mathprgm},), mp)
 end
 
-function emp_mp_getobjdir(mp)
-	return ccall((:mathprgm_getobjvar, libreshop), Cint, (Ptr{mathprgm},), mp)
+function emp_mp_getsense(mp)
+	return ccall((:rhp_mp_getsense, libreshop), Cint, (Ptr{mathprgm},), mp)
 end
 
 function emp_mp_print(mp, ctx)
-	ccall((:mathprgm_print, libreshop), Cint, (Ptr{mathprgm}, Ptr{context}), mp, ctx)
+	ccall((:rhp_mp_print, libreshop), Cint, (Ptr{mathprgm}, Ptr{context}), mp, ctx)
 end
 
 function reshop_postprocess(mdl_solver::Ptr{reshop_model})
@@ -446,6 +429,11 @@ end
 
 function emp_ovf_check(ovf_def)
 	res = ccall((:rhp_ovf_check, libreshop), Cint, (Ptr{ovf_definition},), ovf_def)
+end
+
+function rhp_ovf_setreformulation(ovf_def, reformulation::String)
+	res = ccall((:rhp_ovf_setreformulation, libreshop), Cint, (Ptr{ovf_definition}, Cstring), ovf_def, reformulation)
+	res != 0 && error("return code $res from ReSHOP")
 end
 
 function equtree_var(ctx, tree, node, idx, coeff)
@@ -516,10 +504,10 @@ function equnode_deref(node::Ref{Ref{Ptr{equnode}}})
 end
 
 function ctx_get_solvername(ctx::Ptr{context})
-	str = "?"^256
-	res = ccall((:gams_getsolverstr, libreshop), Cint, (Ptr{context}, Cstring, Cuint), ctx, str, length(str))
+	solvername = Ref{Cstring}(C_NULL)
+	res = ccall((:ctx_getsolverstr, libreshop), Cint, (Ptr{context}, Ref{Cstring}), ctx, solvername)
 	res != 0 && error("return code $res from ReSHOP")
-	return str
+	return unsafe_string(solvername.x)
 end
 
 function rhp_add_free_var(ctx::Ptr{context}, nb, avar::Ptr{abstract_var}=Ptr{abstract_var}(C_NULL))
@@ -650,13 +638,23 @@ function ctx_getobjvar(ctx::Ptr{context})
 	return tmpCint.x
 end
 
-function reshop_set_rhs(ctx::Ptr{context}, idx, val)
-	res = ccall((:ctx_setrhs, libreshop), Cint, (Ptr{context}, Cint, Cdouble), ctx, idx, val)
+function reshop_set_cst(ctx::Ptr{context}, idx, val)
+	res = ccall((:ctx_setcst, libreshop), Cint, (Ptr{context}, Cint, Cdouble), ctx, idx, val)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
+function rhp_set_perp(ctx::Ptr{context}, ei, vi)
+	res = ccall((:ctx_setequvarperp, libreshop), Cint, (Ptr{context}, RHP_IDXT, RHP_IDXT), ctx, ei, vi)
+	res != 0 && error("return code $res from ReSHOP")
+end
+
+function rhp_set_equasmapping(ctx::Ptr{context}, ei)
+	res = ccall((:ctx_setequtype, libreshop), Cint, (Ptr{context}, RHP_IDXT, Cuint, Cuint), ctx, ei, RHP_EQ_MAPPING, RHP_CONE_NONE)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function reshop_set_equtype(ctx::Ptr{context}, idx, cone)
-	res = ccall((:ctx_setequtype, libreshop), Cint, (Ptr{context}, Cint, Cuint, Cuint), ctx, idx, 2, cone)
+	res = ccall((:ctx_setequtype, libreshop), Cint, (Ptr{context}, Cint, Cuint, Cuint), ctx, idx, RHP_EQ_CONE_INCLUSION, cone)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
@@ -907,4 +905,9 @@ end
 
 function rhp_is_equ_valid(ctx::Ptr{context}, eidx)
 	return ccall((:rhp_is_equ_valid, libreshop), Cint, (Ptr{context}, Cint,), ctx, eidx)  == 1 ? true : false
+end
+
+function rhp_PATH_setfname(fname::String)
+	res = ccall((:rhp_PATH_setfname, libreshop), Cint, (Cstring,), fname)
+	res != 0 && error("return code $res from ReSHOP")
 end
