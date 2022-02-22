@@ -102,7 +102,7 @@ function MOI.add_constraint(model::Optimizer,
     avar = _ensure_avar(model)
     rhp_avar_set(avar, vidx)
     rhp_equ_add_linear(model.ctx, eidx, avar, coefs)
-    _set_rhs(model, eidx, func.constant, set)
+    _set_cst(model, eidx, func.constant, set)
     # Add constraint to index.
     return MOI.ConstraintIndex{typeof(func), typeof(set)}(eidx+1)
 end
@@ -123,7 +123,7 @@ function MOI.add_constraint(model::Optimizer,
     rhp_avar_set(avar, vidx)
     # TODO(Xhub) change this when quadratic constrains are supported
     rhp_equ_add_lin_tree(model.ctx, eidx, coefs, avar, 1.)
-    _set_rhs(model, eidx, func.constant, set)
+    _set_cst(model, eidx, func.constant, set)
     # Add constraints to index.
     ci = MOI.ConstraintIndex{typeof(func), typeof(set)}(eidx+1)
     model.quadfn_mapping[ci] = eidx
@@ -149,7 +149,7 @@ function MOI.add_constraint(model::Optimizer,
     end
 
     for (idx, cst) in enumerate(func.constants)
-        _set_rhs(model, current_m-1+idx, cst, set)
+        _set_cst(model, current_m-1+idx, cst, set)
     end
 
     # Add constraints to index.

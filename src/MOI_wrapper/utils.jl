@@ -7,7 +7,7 @@ function _ensure_avar(model)
 end
 
 
-function _set_rhs(model::Optimizer, eidx, fn_cst, set::LS)
+function _set_cst(model::Optimizer, eidx, fn_cst, set::LS)
     # Add bound to constraint.
     if isa(set, MOI.LessThan{Float64})
         val = set.upper
@@ -18,16 +18,16 @@ function _set_rhs(model::Optimizer, eidx, fn_cst, set::LS)
     end
 
     # Set the rhs
-    reshop_set_rhs(model.ctx, eidx, val - fn_cst)
+    reshop_set_cst(model.ctx, eidx, fn_cst - val)
     reshop_set_equtype(model.ctx, eidx, set_to_reshop[typeof(set)])
 
 end
 
-function _set_rhs(model::Optimizer, eidx, fn_cst, set::VLS)
+function _set_cst(model::Optimizer, eidx, fn_cst, set::VLS)
     # Add bound to constraint.
 
     # Set the rhs
-    reshop_set_rhs(model.ctx, eidx, - fn_cst)
+    reshop_set_cst(model.ctx, eidx, fn_cst)
     reshop_set_equtype(model.ctx, eidx, set_to_reshop[typeof(set)])
 end
 

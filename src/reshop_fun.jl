@@ -283,9 +283,9 @@ function ctx_getequval(ctx, idx)
 	return val.x
 end
 
-function ctx_getrhs(ctx::Ptr{context}, idx)
+function ctx_getcst(ctx::Ptr{context}, idx)
 	val = Ref{Cdouble}(NaN)
-	res = ccall((:ctx_getrhs, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}), ctx, idx, val)
+	res = ccall((:ctx_getcst, libreshop), Cint, (Ptr{context}, Cint, Ref{Cdouble}), ctx, idx, val)
 	res != 0 && error("return code $res from ReSHOP")
 	return val.x
 end
@@ -650,8 +650,8 @@ function ctx_getobjvar(ctx::Ptr{context})
 	return tmpCint.x
 end
 
-function reshop_set_rhs(ctx::Ptr{context}, idx, val)
-	res = ccall((:ctx_setrhs, libreshop), Cint, (Ptr{context}, Cint, Cdouble), ctx, idx, val)
+function reshop_set_cst(ctx::Ptr{context}, idx, val)
+	res = ccall((:ctx_setcst, libreshop), Cint, (Ptr{context}, Cint, Cdouble), ctx, idx, val)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
