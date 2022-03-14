@@ -46,9 +46,9 @@ _chk_citype = Dict(
     )
 
 _cone_moi_to_rhp = Dict(
-                        MOI.LessThan{Float64} => CONE_R_MINUS,
-                        MOI.GreaterThan{Float64} => CONE_R_PLUS,
-                        MOI.EqualTo{Float64} => CONE_0
+                        MOI.LessThan{Float64} => RHP_CONE_R_MINUS,
+                        MOI.GreaterThan{Float64} => RHP_CONE_R_PLUS,
+                        MOI.EqualTo{Float64} => RHP_CONE_0
                        )
 
 function chk_equ_citype(ctx, eidx, ::Type{MOI.ConstraintIndex{MOI.SingleVariable, S}}) where S<:SS
@@ -60,7 +60,7 @@ end
 
 function chk_equ_citype(ctx, eidx, ::Type{MOI.ConstraintIndex{F, S}}) where  {F<:SF, S<:LS}
     type, cone = reshop_get_equtype(ctx, eidx)
-    res = (type == 2) && (cone == get(_cone_moi_to_rhp, S, CONE_NONE))
+    res = (type == 2) && (cone == get(_cone_moi_to_rhp, S, RHP_CONE_NONE))
     return res
 end
 

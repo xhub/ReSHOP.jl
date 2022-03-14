@@ -132,6 +132,15 @@ end
     end
 end
 
+#TODO: fix problem type issue
+#@testset "MOI MPCC" begin
+#   @testset "with knitro" begin
+#   solver_config = config
+#   moi_solver = ReSHOP.Optimizer(solver="knitro"; optimizer_kw...)
+#   MOIT.test_qp_complementarity_constraint(moi_solver, get(config_solver, moi_solver, solver_config))
+#   end
+#end
+
 #= @testset "MOI SOCP tests" begin =#
 #=     # TODO: DualObjectivevalue not supported =#
 #=     # Presolve must be switch off to get proper dual variables. =#

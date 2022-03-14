@@ -18,8 +18,8 @@ function _set_cst(model::Optimizer, eidx, fn_cst, set::LS)
     end
 
     # Set the rhs
-    reshop_set_cst(model.ctx, eidx, fn_cst - val)
     reshop_set_equtype(model.ctx, eidx, set_to_reshop[typeof(set)])
+    reshop_set_cst(model.ctx, eidx, fn_cst - val)
 
 end
 
@@ -27,8 +27,8 @@ function _set_cst(model::Optimizer, eidx, fn_cst, set::VLS)
     # Add bound to constraint.
 
     # Set the rhs
-    reshop_set_cst(model.ctx, eidx, fn_cst)
     reshop_set_equtype(model.ctx, eidx, set_to_reshop[typeof(set)])
+    reshop_set_cst(model.ctx, eidx, fn_cst)
 end
 
 function get_status(ctx::Ptr{context})
@@ -40,6 +40,32 @@ function is_valid_index(idx::RHP_IDXT)
     return idx >= 0
 end
 
+# Adding the constant part requires setting the equation type
+function rhp_addequ_nocst(ctx, avar, func::MOI.ScalarAffineFunction)
+  eidx = rhp_add_equ(ctx)
+  lvidx, lcoefs = canonical_linear_reduction(func)
+  rhp_avar_set(avar, lvidx)
+  rhp_equ_add_linear(ctx, eidx, avar, lcoefs)
+  return eidx
+end
+
+function rhp_addequ_nocst(ctx, avar, func::MOI.ScalarQuadraticFunction)
+    eidx = rhp_add_equ(ctx)
+    # We parse the expression passed in arguments.
+    qvidx1, qvidx2, qcoefs = canonical_quadratic_reduction(func)
+    lvidx, lcoefs = canonical_linear_reduction(func)
+    rhp_equ_add_quadratic(ctx, eidx, qvidx1, qvidx2, qcoefs)
+    rhp_avar_set(avar, lvidx)
+    rhp_equ_add_linear_chk(ctx, eidx, avar, lcoefs)
+    return eidx
+end
+
+function rhp_addequ_nocst(ctx, avar, var::MOI.SingleVariable)
+    eidx = rhp_add_equ(ctx)
+    rhp_avar_set(avar, var.variable.value - 1)
+    rhp_equ_add_linear(ctx, eidx, avar, [1.,])
+    return eidx
+end
 
 function is_constraint_active(ctx::Ptr{context}, ci::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{Float64}})
      return true
@@ -170,4 +196,11 @@ function canonical_vector_affine_reduction(func::MOI.VectorAffineFunction)
         push!(coeffs, t.scalar_term.coefficient)
     end
     return index_cols, index_vars, coeffs
+end
+
+function get_solverstack(model::Optimizer)
+  solver_stack = model.solver_stack
+  if solver_stack == ""
+    solver_stack = global_solverstack
+  end
 end

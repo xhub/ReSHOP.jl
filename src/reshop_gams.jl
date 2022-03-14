@@ -2,14 +2,23 @@
 # GAMS specific functions
 ##############################################################################
 
+# Remove the stored gamscnrt.dat file
+function reset_gamscntr()
+  gamscntr_template_file = joinpath(solverdata_dir, "gamscntr.dat")
+  if isfile(gamscntr_template_file)
+    rm(gamscntr_template_file, force=true)
+  end
+end
+
 function reshop_setup_gams()
-    ctx = ccall((:ctx_alloc, libreshop), Ptr{context}, (Cuint,), 0)
+    ctx = ctx_alloc(RHP_MDL_GAMS)
 
     gamscntr_template_file = joinpath(solverdata_dir, "gamscntr.dat")
 
     if !isfile(gamscntr_template_file)
         reshop_init_gams_solverdata()
     end
+
     if !isfile(gamscntr_template_file)
         error("Could not create template GAMS control file! Make sure that GAMS is properly installed and available via the system path")
     end
@@ -59,7 +68,7 @@ function reshop_init_gams_solverdata(force=false)
 
     gms_file = joinpath(solverdata_dir, "dummy.gms")
 
-    println("Running the gams command to initial bootstrap file\n")
+#    println("Running the gams command to initial bootstrap file\n")
 
     mktempdir(solverdata_dir) do substr
         cd(solverdata_dir)
@@ -75,7 +84,7 @@ function reshop_init_gams_solverdata(force=false)
         end
     end
 
-    println("\nGAMS boostrap file successfully generated")
+#    println("\nGAMS boostrap file successfully generated")
     cd(curdir)
 
 end
