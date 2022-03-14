@@ -32,8 +32,9 @@ function _set_cst(model::Optimizer, eidx, fn_cst, set::VLS)
 end
 
 function get_status(ctx::Ptr{context})
-    return (solver_stat[rhp_get_solvestat(ctx)],
-            model_stat[rhp_get_modelstat(ctx)])
+    # beaware of the 1-index!
+    return (solver_stat[1+rhp_get_solvestat(ctx)],
+            model_stat[1+rhp_get_modelstat(ctx)])
 end
 
 function is_valid_index(idx::RHP_IDXT)
