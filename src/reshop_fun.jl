@@ -437,7 +437,7 @@ function rhp_ovf_setreformulation(ovf_def, reformulation::String)
 end
 
 function equtree_var(ctx, tree, node, idx, coeff)
-	res = ccall((:equtree_var, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cint, Cdouble),
+	res = ccall((:rhp_nltree_var, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cint, Cdouble),
 		ctx,
 		tree,
 		node,
@@ -447,7 +447,7 @@ function equtree_var(ctx, tree, node, idx, coeff)
 end
 
 function equtree_cst(ctx, tree, node, value)
-	res = ccall((:equtree_cst, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cdouble),
+	res = ccall((:rhp_nltree_cst, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cdouble),
 		ctx,
 		tree,
 		node,
@@ -456,7 +456,7 @@ function equtree_cst(ctx, tree, node, value)
 end
 
 function equtree_arithm(tree, node, opcode, nb)
-	res = ccall((:equtree_arithm, libreshop), Cint, (Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cuint, Cuint),
+	res = ccall((:rhp_nltree_arithm, libreshop), Cint, (Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cuint, Cuint),
 		tree,
 		node,
 		opcode,
@@ -465,7 +465,7 @@ function equtree_arithm(tree, node, opcode, nb)
 end
 
 function equtree_call(ctx, tree, node, fndata)
-	res = ccall((:equtree_call, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cuint, Cuint),
+	res = ccall((:rhp_nltree_call, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cuint, Cuint),
 		ctx,
 		tree,
 		node,
@@ -475,32 +475,28 @@ function equtree_call(ctx, tree, node, fndata)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function equtree_get_root_addr(tree::Ptr{equtree}, node::Ref{Ref{Ptr{equnode}}})
-	res = ccall((:equtree_get_root_addr, libreshop), Cint, (Ptr{equtree}, Ref{Ref{Ptr{equnode}}}),
+function equtree_get_root_addr(tree::Ptr{equtree}, node::Ref{Ptr{Ptr{equnode}}})
+	res = ccall((:rhp_nltree_getroot, libreshop), Cint, (Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}),
 		tree,
 		node)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
 function equtree_umin(ctx, tree, node)
-	res = ccall((:equtree_umin, libreshop), Cint, (Ptr{equtree}, Ref{Ref{Ptr{equnode}}}),
+	res = ccall((:equtree_umin, libreshop), Cint, (Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}),
 		tree,
 		node)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function equnode_get_child_addr(node::Ptr{equnode}, i::Int)
-	child = Ref{Ref{Ptr{equnode}}}(C_NULL)
-	res = ccall((:equnode_get_child_addr, libreshop), Cint, (Ptr{equnode}, Ref{Ref{Ptr{equnode}}}, Cuint),
-		node,
+function equnode_get_child_addr(node::Ref{Ptr{Ptr{equnode}}}, i::Int)
+	child = Ref{Ptr{Ptr{equnode}}}(C_NULL)
+	res = ccall((:rhp_nltree_getchild, libreshop), Cint, (Ptr{Ptr{equnode}}, Ref{Ptr{Ptr{equnode}}}, Cuint),
+		node.x,
 		child,
 		i)
 	res != 0 && error("return code $res from ReSHOP")
 	return child
-end
-
-function equnode_deref(node::Ref{Ref{Ptr{equnode}}})
-	return ccall((:p2deref, libreshop), Ptr{equnode}, (Ref{Ref{Ptr{equnode}}},), node)
 end
 
 function ctx_get_solvername(ctx::Ptr{context})
@@ -675,7 +671,7 @@ end
 
 function reshop_get_treedata(ctx, eidx::Int)
 	tree = ccall((:myo_getequtree, libreshop), Ptr{equtree}, (Ptr{context}, Cint), ctx, eidx)
-	node = Ref{Ref{Ptr{equnode}}}(C_NULL)
+	node = Ref{Ptr{Ptr{equnode}}}(C_NULL)
 	res = equtree_get_root_addr(tree, node)
 	res != 0 && error("return code $res from ReSHOP")
 	return (tree, node)

@@ -11,9 +11,9 @@ function write_arithm_op(ctx, tree, node, fn, args)
     # TODO(xhub) implement better management of variable/constant base
     len = length(args)
     equtree_arithm(tree, node, arithm_ops[fn], len)
-    pnode = equnode_deref(node)
+
     for i in 0:(len-1)
-        child = equnode_get_child_addr(pnode, i)
+        child = equnode_get_child_addr(node, i)
         reshop_add_nlexpr(ctx, tree, child, args[len-i])
     end
 end
@@ -30,10 +30,9 @@ function write_power_expr(c, ctx, tree, node)
     end
 
     equtree_call(ctx, tree, node, (opcode, 2))
-    pnode = equnode_deref(node)
 
     for i in 0:(len - 2)
-        child = equnode_get_child_addr(pnode, i)
+        child = equnode_get_child_addr(node, i)
         reshop_add_nlexpr(ctx, tree, child, c.args[i+2])
     end
 end
@@ -76,10 +75,9 @@ function reshop_add_nlexpr(ctx, tree, node, c::Expr)
 
             equtree_call(ctx, tree, node, func_to_reshop[c.args[1]])
             len = length(c.args)
-            pnode = equnode_deref(node)
 
             for i in 0:(len - 2)
-                child = equnode_get_child_addr(pnode, i)
+                child = equnode_get_child_addr(node, i)
                 reshop_add_nlexpr(ctx, tree, child, c.args[i+2])
             end
         end
