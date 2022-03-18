@@ -33,8 +33,24 @@ end
 
 function get_status(ctx::Ptr{context})
     # beaware of the 1-index!
-    return (solver_stat[1+rhp_get_solvestat(ctx)],
-            model_stat[1+rhp_get_modelstat(ctx)])
+    solvestat = rhp_get_solvestat(ctx)
+    modelstat = rhp_get_modelstat(ctx)
+
+    if solvestat < 1 || solvestat > length(solver_stat)
+      println("solvestat = $(solvestat) is outside of range")
+      solvestatsymb = :InternalError
+    else
+      solvestatsymb = solver_stat[rhp_get_solvestat(ctx)]
+    end
+
+    if modelstat < 1 || modelstat > length(model_stat)
+      println("modelstat = $(modelstat) is outside of range")
+      modelstatsymb = :ErrorUnknown
+    else
+      modelstatsymb = model_stat[rhp_get_modelstat(ctx)]
+    end
+
+    return (solvestatsymb, modelstatsymb)
 end
 
 function is_valid_index(idx::RHP_IDXT)
