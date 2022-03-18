@@ -54,7 +54,7 @@ function get_status(ctx::Ptr{context})
 end
 
 function is_valid_index(idx::RHP_IDXT)
-    return idx >= 0
+    return idx >= 0 && idx <= IdxMaxValid
 end
 
 # Adding the constant part requires setting the equation type

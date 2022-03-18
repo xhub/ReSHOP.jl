@@ -2,6 +2,14 @@
 # Type of the equation and variable indices
 const RHP_IDXT                = Cint
 
+const MAX_VAL_IDX             = typemax(RHP_IDXT)
+const IdxInvalid              = MAX_VAL_IDX
+const IdxNA                   = MAX_VAL_IDX-1
+const IdxNotFound             = MAX_VAL_IDX-2
+const IdxDeleted              = MAX_VAL_IDX-3
+const IdxOutOfRange           = MAX_VAL_IDX-4
+const IdxMaxValid             = MAX_VAL_IDX-100
+
 # Model types
 const RHP_MDL_GAMS            = Cuint(0)  # GAMS context
 const RHP_MDL_RHP             = Cuint(1)  # internal context
