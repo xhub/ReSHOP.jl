@@ -39,6 +39,10 @@ function check_inbounds(model::Optimizer, vi::Integer)
     return
 end
 
+function valid_vi(vi)
+		return vi >= 0 && vi < reshop_valid_index_max
+end
+
 ##################################################
 ## Check inbounds for safety.
 function check_inbounds(model::Optimizer, var::MOI.SingleVariable)
@@ -111,10 +115,10 @@ end
 #end
 
 function MOI.get(model::Optimizer, ::Type{MOI.VariableIndex}, name::String)
-    vidx = ctx_getvarbyname(model.ctx, name)
-    if vidx >= 0
-        return MOI.VariableIndex(vidx+1)
-    elseif vidx == -2
+    vi = ctx_getvarbyname(model.ctx, name)
+    if valid_vi(vi)
+        return MOI.VariableIndex(vi+1)
+    elseif vi == -2
         error("Multiple variables have the name $(name).")
     else
         return nothing
