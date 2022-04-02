@@ -498,7 +498,7 @@ end
 
 function ctx_get_solvername(ctx::Ptr{context})
 	solvername = Ref{Cstring}(C_NULL)
-	res = ccall((:ctx_getsolverstr, libreshop), Cint, (Ptr{context}, Ref{Cstring}), ctx, solvername)
+	res = ccall((:ctx_getsolvername, libreshop), Cint, (Ptr{context}, Ref{Cstring}), ctx, solvername)
 	res != 0 && error("return code $res from ReSHOP")
 	return unsafe_string(solvername.x)
 end
