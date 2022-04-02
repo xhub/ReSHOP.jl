@@ -71,7 +71,6 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     ctx_dest::Ptr{context}
     mdl::Ptr{reshop_model}
     mdl_solver::Ptr{reshop_model}
-    options::Ptr{reshop_options}
     rhp_options::Dict{String, Union{Cdouble, Cint, Bool, Cstring, String}}
     gams_dir::String
     avar_cache::Union{Ptr{abstract_var}, Nothing}
@@ -81,7 +80,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     len_nl_cons::Cuint
 end
 
-function helper_options(ctx, options, reshop_opts::Ptr{reshop_options})
+function helper_options(ctx, options)
     solver_name = ""
     solver_stack = ""
     rhp_options = Dict{String, Union{Cdouble, Cint, Bool, Cstring, String}}()
@@ -92,7 +91,7 @@ function helper_options(ctx, options, reshop_opts::Ptr{reshop_options})
         elseif sname == "solver_stack"
             solver_stack = value
         else
-            res = reshop_option_set(reshop_opts, sname, value)
+            res = reshop_option_set(sname, value)
             if (res != 0)
                  rhp_set_option(ctx, sname, value)
             end
@@ -107,10 +106,7 @@ function Optimizer(;options...)
     # Create ReSHOP context.
     ctx = ctx_alloc()
 
-    # TODO this is quite a hack just for the "output" option.
-    # Refactoring option in ReSHOP will enable us to move on
-    reshop_opts = reshop_options_alloc()
-    solver_name, solver_stack, rhp_options = helper_options(ctx, options, reshop_opts)
+    solver_name, solver_stack, rhp_options = helper_options(ctx, options)
 
     model = Optimizer(0, MOI.FEASIBILITY_SENSE, 0,
                       Dict{MOI.ConstraintIndex{VOV, <: VLS}, Cuint}(), Dict{MOI.ConstraintIndex{VAF, <: VLS}, Cuint}(),
@@ -118,7 +114,7 @@ function Optimizer(;options...)
                       Dict{MOI.ConstraintIndex{VOV, <: Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}, Union{MOI.SOS1{Float64}, MOI.SOS2{Float64}}}(),
                       Dict{MOI.ConstraintIndex,String}(), Set{MOI.VariableIndex}(),
                       ctx, Ptr{context}(C_NULL), Ptr{reshop_model}(C_NULL), Ptr{reshop_model}(C_NULL),
-                      reshop_opts, rhp_options, "", nothing, solver_name, solver_stack, -1, 0)
+                      rhp_options, "", nothing, solver_name, solver_stack, -1, 0)
 
     finalizer(MOI.empty!, model)
     return model
@@ -153,12 +149,12 @@ end
 # MOI.Silent.
 MOI.supports(model::Optimizer, ::MOI.Silent) = true
 function MOI.get(model::Optimizer, ::MOI.Silent)
-    return reshop_option_get(model.options, "output") == 0xF
+    return reshop_option_get("output") == 0xF
 end
 
 function MOI.set(model::Optimizer, ::MOI.Silent, value)
     val = value ? 0xF : 0x8
-    reshop_option_set(model.options, "output", val)
+    reshop_option_set("output", val)
     return
 end
 
@@ -181,13 +177,13 @@ function MOI.set(model::Optimizer, p::MOI.RawParameter, value)
     if p.name == "solver"
          model.solver_name = value
     end
-    #reshop_option_set(model.options, p.name, value)
+    #reshop_option_set(p.name, value)
     return
 end
 
 function MOI.get(model::Optimizer, p::MOI.RawParameter)
-    if haskey(model.options, p.name)
-        return model.options[p.name]
+    if haskey(model.rhp_options, p.name)
+        return model.rhp_options[p.name]
     end
     error("RawParameter with name $(p.name) is not set.")
 end
@@ -242,7 +238,7 @@ function MOI.empty!(model::Optimizer)
     if model.ctx != nothing
         ctx_dealloc(model.ctx)
         model.ctx = ctx_alloc()
-        helper_options(model.ctx, model.rhp_options, model.options)
+        helper_options(model.ctx, model.rhp_options)
     end
 
     model.number_solved = 0
@@ -254,7 +250,6 @@ function MOI.empty!(model::Optimizer)
     model.delvars    = Set()
     # TODO(xhub) cleanup avar?
     # TODO(xhub) check that it is not necessary to do anything here
-    #set_options(model, model.options)
     if (!isempty(model.gams_dir))
         try
             rm(model.gams_dir, recursive=true, force=true)

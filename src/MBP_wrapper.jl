@@ -95,7 +95,6 @@ mutable struct ReSHOPMathProgBaseModel <: MPB.AbstractMathProgModel
     reshop_ctx_dest::Ptr{context}
     reshop_mdl::Ptr{reshop_model}
     reshop_mdl_solver::Ptr{reshop_model}
-    reshop_options::Ptr{reshop_options}
     gams_dir::String
 
     function ReSHOPMathProgBaseModel(solver_name::String,
@@ -147,7 +146,6 @@ mutable struct ReSHOPMathProgBaseModel <: MPB.AbstractMathProgModel
             Ptr{context}(C_NULL),
             Ptr{reshop_model}(C_NULL),
             Ptr{reshop_model}(C_NULL),
-            Ptr{reshop_options}(C_NULL),
             "")
         @compat finalizer(reshop_cleanup, o)
         o
@@ -445,8 +443,6 @@ function optimize!(m::ReSHOPMathProgBaseModel)
         end
     end
 
-    m.reshop_options = reshop_options_set(m.options)
-
     # TODO(Xhub) this hack has to go.
     if m.emp.hasvalue
        return m.emp.value()
@@ -658,7 +654,6 @@ end
 function reshop_cleanup(o::ReSHOPMathProgBaseModel)
     ctx_dealloc(o.reshop_ctx)
     ctx_dealloc(o.reshop_ctx_dest)
-    reshop_options_dealloc(o.reshop_options)
     reshop_free(o.reshop_mdl)
     reshop_free(o.reshop_mdl_solver)
     if (!isempty(o.gams_dir))

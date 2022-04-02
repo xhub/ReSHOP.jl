@@ -1,7 +1,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2015 Jack Dunn
-Copyright (c) 2017-2018 Olivier Huber
+Copyright (c) 2017-2022 Olivier Huber
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

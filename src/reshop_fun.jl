@@ -28,9 +28,6 @@ end
 mutable struct ovf_definition
 end
 
-mutable struct reshop_options
-end
-
 mutable struct equil
 end
 
@@ -711,64 +708,56 @@ function rhp_get_modelstat(ctx::Ptr{context})
 	return tmpCint.x
 end
 
-function reshop_options_alloc()
-	return ccall((:hack_options_alloc, libreshop), Ptr{reshop_options}, ())
-end
-
-function reshop_options_dealloc(o::Ptr{reshop_options})
-	ccall((:hack_options_dealloc, libreshop), Cvoid, (Ptr{reshop_options},), o)
-end
-
-function reshop_option_get(opt::Ptr{reshop_options}, k::String, val::Ref{Cdouble})
-	res = ccall((:option_get_d, libreshop), Cint, (Ptr{reshop_options}, Cstring, Ptr{Cdouble}), opt, k, val)
+function reshop_option_get(k::String, val::Ref{Cdouble})
+	res = ccall((:rhp_opt_getd, libreshop), Cint, (Cstring, Ptr{Cdouble}), k, val)
 	res != 0 && error("return code $res from ReSHOP")
 	return val.x
 end
 
-function reshop_option_get(opt::Ptr{reshop_options}, k::String, val::Ref{Cstring})
-	res = ccall((:option_get_i, libreshop), Cint, (Ptr{reshop_options}, Cstring, Ptr{Cstring}), opt, k, val)
+function reshop_option_get(k::String, val::Ref{Cstring})
+	res = ccall((:rhp_opt_gets, libreshop), Cint, (Cstring, Ptr{Cstring}), k, val)
 	res != 0 && error("return code $res from ReSHOP")
 	return val.x
 end
 
-function reshop_option_get(opt::Ptr{reshop_options}, k::String, val::Ref{Cint})
-	res = ccall((:option_get_i, libreshop), Cint, (Ptr{reshop_options}, Cstring, Ptr{Cint}), opt, k, val)
+function reshop_option_get(k::String, val::Ref{Cint})
+	res = ccall((:rhp_opt_geti, libreshop), Cint, (Cstring, Ptr{Cint}), k, val)
 	res != 0 && error("return code $res from ReSHOP")
 	return val.x
 end
 
-function reshop_option_get(opt::Ptr{reshop_options}, k::String, val::Ref{Cuint})
-	res = ccall((:option_get_i, libreshop), Cint, (Ptr{reshop_options}, Cstring, Ptr{Cuint}), opt, k, val)
+function reshop_option_get(k::String, val::Ref{Cuint})
+	res = ccall((:rhp_opt_geti, libreshop), Cint, (Cstring, Ptr{Cuint}), k, val)
 	res != 0 && error("return code $res from ReSHOP")
 	return val.x
 end
 
-function reshop_option_get(opt::Ptr{reshop_options}, k::String)
-	res = ccall((:option_get_type, libreshop), Cint, (Ptr{reshop_options}, Cstring), opt, k)
+function reshop_option_get(k::String)
+	res = ccall((:rhp_opt_gettype, libreshop), Cint, (Cstring,), k)
 	if haskey(reshop_option_type, res)
 		fn, type = reshop_option_type[res]
 		val = Ref{type}()
-		reshop_option_get(opt, k, val)
+		reshop_option_get(k, val)
 		return val.x
 	else
 		error("unknown option named $k, ReSHOP code is $res")
 	end
 end
 
-function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Bool)
-	return ccall((:option_set_b, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cint), opt, k, v)
+function reshop_option_set(k::String, v::Bool)
+	return ccall((:rhp_opt_setb, libreshop), Cint, (Cstring, Cint), k, v)
 end
 
-function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Integer)
-	return ccall((:option_set_i, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cint), opt, k, v)
+function reshop_option_set(k::String, v::Integer)
+	return ccall((:rhp_opt_seti, libreshop), Cint, (Cstring, Cint), k, v)
 end
 
-function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::Cdouble)
-	return ccall((:option_set_d, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cdouble), opt, k, v)
+function reshop_option_set(k::String, v::Cdouble)
+	return ccall((:rhp_opt_setd, libreshop), Cint, (Cstring, Cdouble), k, v)
 end
 
-function reshop_option_set(opt::Ptr{reshop_options}, k::String, v::String)
-	return ccall((:option_set_str, libreshop), Cint, (Ptr{reshop_options}, Cstring, Cstring), opt, k, v)
+function reshop_option_set(k::String, v::String)
+	return ccall((:rhp_opt_sets, libreshop), Cint, (Cstring, Cstring), k, v)
 end
 
 function reshop_set_modeltype(ctx::Ptr{context}, model_type)
