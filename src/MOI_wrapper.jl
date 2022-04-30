@@ -106,6 +106,8 @@ function Optimizer(;options...)
     # Create ReSHOP context.
     ctx = ctx_alloc()
 
+    # TODO this is quite a hack just for the "output" option.
+    # Refactoring option in ReSHOP will enable us to move on
     solver_name, solver_stack, rhp_options = helper_options(ctx, options)
 
     model = Optimizer(0, MOI.FEASIBILITY_SENSE, 0,
@@ -230,10 +232,11 @@ end
 function MOI.empty!(model::Optimizer)
     ctx_dealloc(model.ctx_dest)
     model.ctx_dest = C_NULL
-    reshop_free(model.mdl)
-    model.mdl = C_NULL
     reshop_free(model.mdl_solver)
     model.mdl_solver = C_NULL
+    # The next free created issues with EMP
+#    reshop_free(model.mdl)
+#    model.mdl = C_NULL
 
     if model.ctx != nothing
         ctx_dealloc(model.ctx)

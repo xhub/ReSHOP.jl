@@ -142,10 +142,10 @@ end
 
 function ctx_getvarname(ctx, vi)
 	name = Ref{Cstring}(C_NULL)
-	res = ccall((:ctx_getvarname, libreshop), Cint, (Ptr{context}, Cint, Ref{Cstring}), ctx, vi, name)
+	res = ccall((:ctx_printvarname, libreshop), Cstring, (Ptr{context}, Cint, Ref{Cstring}), ctx, vi, name)
 #	res != 0 && error("return code $res from ReSHOP")
-	res != 0 && return ""
-	return unsafe_string(name.x)
+	res == C_NULL && return ""
+	return unsafe_string(res)
 end
 
 function hack_last_vidx(ctx::Ptr{context})
@@ -434,7 +434,7 @@ function rhp_ovf_setreformulation(ovf_def, reformulation::String)
 end
 
 function equtree_var(ctx, tree, node, idx, coeff)
-	res = ccall((:rhp_nltree_var, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cint, Cdouble),
+	res = ccall((:rhp_nltree_var, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cint, Cdouble),
 		ctx,
 		tree,
 		node,
@@ -444,7 +444,7 @@ function equtree_var(ctx, tree, node, idx, coeff)
 end
 
 function equtree_cst(ctx, tree, node, value)
-	res = ccall((:rhp_nltree_cst, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cdouble),
+	res = ccall((:rhp_nltree_cst, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cdouble),
 		ctx,
 		tree,
 		node,
@@ -453,7 +453,7 @@ function equtree_cst(ctx, tree, node, value)
 end
 
 function equtree_arithm(tree, node, opcode, nb)
-	res = ccall((:rhp_nltree_arithm, libreshop), Cint, (Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cuint, Cuint),
+	res = ccall((:rhp_nltree_arithm, libreshop), Cint, (Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cuint, Cuint),
 		tree,
 		node,
 		opcode,
@@ -462,7 +462,7 @@ function equtree_arithm(tree, node, opcode, nb)
 end
 
 function equtree_call(ctx, tree, node, fndata)
-	res = ccall((:rhp_nltree_call, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}, Cuint, Cuint),
+	res = ccall((:rhp_nltree_call, libreshop), Cint, (Ptr{context}, Ptr{equtree}, Ref{Ref{Ptr{equnode}}}, Cuint, Cuint),
 		ctx,
 		tree,
 		node,
@@ -472,8 +472,8 @@ function equtree_call(ctx, tree, node, fndata)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function equtree_get_root_addr(tree::Ptr{equtree}, node::Ref{Ptr{Ptr{equnode}}})
-	res = ccall((:rhp_nltree_getroot, libreshop), Cint, (Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}),
+function equtree_get_root_addr(tree::Ptr{equtree}, node::Ref{Ref{Ptr{equnode}}})
+	res = ccall((:rhp_nltree_getroot, libreshop), Cint, (Ptr{equtree}, Ref{Ref{Ptr{equnode}}}),
 		tree,
 		node)
 	res != 0 && error("return code $res from ReSHOP")
@@ -486,10 +486,10 @@ function equtree_umin(ctx, tree, node)
 	res != 0 && error("return code $res from ReSHOP")
 end
 
-function equnode_get_child_addr(node::Ref{Ptr{Ptr{equnode}}}, i::Int)
-	child = Ref{Ptr{Ptr{equnode}}}(C_NULL)
-	res = ccall((:rhp_nltree_getchild, libreshop), Cint, (Ptr{Ptr{equnode}}, Ref{Ptr{Ptr{equnode}}}, Cuint),
-		node.x,
+function rhp_nltree_getchild(node::Ref{Ref{Ptr{equnode}}}, i::Int)
+	child = Ref{Ref{Ptr{equnode}}}(C_NULL)
+  res = ccall((:rhp_nltree_getchild2, libreshop), Cint, (Ref{Ref{Ptr{equnode}}}, Ref{Ref{Ptr{equnode}}}, Cuint),
+		node,
 		child,
 		i)
 	res != 0 && error("return code $res from ReSHOP")
@@ -523,12 +523,12 @@ function reshop_alloc(ctx::Ptr{context})
 end
 
 function reshop_avar()
-  return ccall((:avar_alloc, libreshop), Ptr{abstract_var}, ())
+  return ccall((:avar_new, libreshop), Ptr{abstract_var}, ())
 end
 
 function reshop_avar(size, indices)
 	indicesC = Vector{Cint}(indices)
-	return ccall((:avar_alloc_list, libreshop), Ptr{abstract_var}, (Cuint, Ptr{Cint}), size, indicesC)
+	return ccall((:avar_newlistcopy, libreshop), Ptr{abstract_var}, (Cuint, Ptr{Cint}), size, indicesC)
 end
 
 function rhp_avar_set(avar::Ptr{abstract_var}, indices::Integer)
@@ -591,7 +591,7 @@ function rhp_equ_add_quadratic(ctx::Ptr{context}, eidx, vidx1, vidx2, coeffs)
 end
 
 function reshop_free(mdl::Ptr{reshop_model})
-	return ccall((:reshop_free, libreshop), Cvoid, (Ref{Ptr{reshop_model}},), mdl)
+	return ccall((:rhp_free, libreshop), Cvoid, (Ptr{reshop_model},), mdl)
 end
 
 function reshop_mat_coo(ridx, cidx, vals)
@@ -737,8 +737,7 @@ function reshop_option_get(k::String)
 	if haskey(reshop_option_type, res)
 		fn, type = reshop_option_type[res]
 		val = Ref{type}()
-		reshop_option_get(k, val)
-		return val.x
+		return reshop_option_get(k, val)
 	else
 		error("unknown option named $k, ReSHOP code is $res")
 	end
@@ -758,6 +757,7 @@ end
 
 function reshop_option_set(k::String, v::String)
 	return ccall((:rhp_opt_sets, libreshop), Cint, (Cstring, Cstring), k, v)
+#	return ccall((:rhp_opt_setfromstr, libreshop), Cint, (Cstring, Cstring), k, v)
 end
 
 function reshop_set_modeltype(ctx::Ptr{context}, model_type)

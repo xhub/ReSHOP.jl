@@ -23,6 +23,15 @@ function MOI.get(model::Optimizer, ::MOI.ListOfVariableIndices)
     return [MOI.VariableIndex(i) for i in 1:ctx_numvar(model.ctx)]
 end
 
+function chk_inbounds(model::Optimizer, vi::MOI.VariableIndex)
+#  if vi.value >= reshop_valid_index_max
+  num_variables = ctx_numvar(model.ctx)
+  if !(1 <= vi.value <= 1+num_variables)
+    return false
+  end
+  return true
+end
+
 function check_inbounds(model::Optimizer, vi::MOI.VariableIndex)
     num_variables = ctx_numvar(model.ctx)
     if !(1 <= vi.value <= 1+num_variables)
@@ -115,19 +124,19 @@ end
 #end
 
 function MOI.get(model::Optimizer, ::Type{MOI.VariableIndex}, name::String)
-    vi = ctx_getvarbyname(model.ctx, name)
-    if valid_vi(vi)
-        return MOI.VariableIndex(vi+1)
-    elseif vi == -2
-        error("Multiple variables have the name $(name).")
-    else
-        return nothing
-    end
+  vi = ctx_getvarbyname(model.ctx, name)
+  if valid_vi(vi)
+		return MOI.VariableIndex(vi+1)
+	elseif vi == -2 # this is set in reshop_fun.jl ...
+    error("Multiple variables have the name $(name).")
+  else
+    return nothing
+  end
 end
 
 function MOI.get(model::Optimizer, ::MOI.VariableName, vi::MOI.VariableIndex)
-    check_inbounds(model, vi)
-    return ctx_getvarname(model.ctx, vi.value-1)
+  check_inbounds(model, vi)
+  return ctx_getvarname(model.ctx, vi.value-1)
 end
 
 
