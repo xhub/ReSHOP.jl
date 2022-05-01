@@ -13,7 +13,7 @@ using LinearAlgebra, SparseArrays
 using DataDeps
 
 export ReSHOPSolver, getsolvername, getsolveresult, getsolveresultnum, getsolvemessage, getsolveexitcode, LinearQuadraticModel,
-       ovf_setreformulation, set_solverstack
+       ovf_setreformulation, set_solverstack, get_solverstacks
 
 if VERSION <= v"1.3.0"
    # Load in `deps.jl`, complaining if it does not exist
@@ -185,6 +185,10 @@ include("reshop_solve.jl")
 function set_solverstack(solverstack::String)
   global global_solverstack = solverstack
   return 
+end
+
+function get_solverstacks()
+  return solverstacks
 end
 
 end
