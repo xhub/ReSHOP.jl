@@ -26,17 +26,32 @@ else
    using ReSHOP_jll
 end
 
+include("reshop_utils.jl")
+
 global_solverstack = "RESHOP"
+solverstacks = ["RESHOP"]
 reshop_valid_index_max = Csize_t(0)
 
 # This is will be called immediately after the module is loaded
 function __init__()
+    reshop_set_printops(stdout)
     global reshop_valid_index_max = ccall((:rhp_getidxmax, libreshop), Csize_t, (),)
 
     gamscntr_template_file = joinpath(solverdata_dir, "gamscntr.dat")
 
     if isfile(gamscntr_template_file)
-       global global_solverstack = "GAMS"
+        input = read(gamscntr_template_file, String)
+        gamsdir = gamscntr_getgamsdir(input)
+        res = ccall((:rhp_gms_setgamsdir, libreshop), Cint, (Cstring,), gamsdir)
+        res != 0 && error("return code $res from ReSHOP")
+
+        ENV["PATH"] *= ":" * gamsdir
+    
+        # This is needed to prevent the listing of the Process directory
+        ENV["DEBUG_PGAMS"] = '0'
+
+        global global_solverstack = "GAMS"
+        push!(solverstacks, "GAMS")
     end
 
     # This comes from https://github.com/chkwon/PATHSolver.jl
@@ -158,8 +173,6 @@ function ReSHOPSolver(solver_name::String="",
     ReSHOPSolver(solver_name, options, nothing)
 end
 
-
-include("reshop_utils.jl")
 
 include("MBP_wrapper.jl")
 include("MOI_wrapper.jl")

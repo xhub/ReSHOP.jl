@@ -10,6 +10,10 @@ function reset_gamscntr()
   end
 end
 
+function gamscntr_getgamsdir(gamscntr)
+  return split(gamscntr, term_str)[29]
+end
+
 function reshop_setup_gams()
     ctx = ctx_alloc(RHP_MDL_GAMS)
 
@@ -39,17 +43,10 @@ function reshop_setup_gams()
     res != 0 && error("return code $res from ReSHOP")
 
     # hm bad hack
-    gamsdir = split(gamscntr_template, term_str)[29]
-
-    CONFIG[:debug] && println("DEBUG: gamsdir is ``$gamsdir''")
-
-    res = ccall((:gams_setgamsdir, libreshop), Cint, (Ptr{context}, Cstring), ctx, gamsdir)
-    res != 0 && error("return code $res from ReSHOP")
-
-    ENV["PATH"] *= ":" * gamsdir
-
-    # This is needed to prevent the listing of the Process directory
-    ENV["DEBUG_PGAMS"] = '0'
+#    gamsdir = gamscntr_getgamsdir(gamscntr_template)
+#    CONFIG[:debug] && println("DEBUG: gamsdir is ``$gamsdir''")
+#    res = ccall((:gams_setgamsdir, libreshop), Cint, (Ptr{context}, Cstring), ctx, gamsdir)
+#    res != 0 && error("return code $res from ReSHOP")
 
     return (ctx, gams_dir)
 end
@@ -77,6 +74,11 @@ function reshop_init_gams_solverdata(force=false)
 
         open(gamscntr, "w") do out_gamscntr
             input = read(joinpath(substr, "gamscntr.dat"), String)
+            # Set the gamsdir immediately
+            gamsdir = gamscntr_getgamsdir(input)
+            res = ccall((:rhp_gms_setgamsdir, libreshop), Cint, (Cstring,), gamsdir)
+            res != 0 && error("return code $res from ReSHOP")
+
             # the order of subsitution matters here
             input = replace(input, substr => "@@SUB@@")
             input = replace(input, pwd() => "@@SUB@@")

@@ -480,7 +480,7 @@ function equtree_get_root_addr(tree::Ptr{equtree}, node::Ref{Ref{Ptr{equnode}}})
 end
 
 function equtree_umin(ctx, tree, node)
-	res = ccall((:equtree_umin, libreshop), Cint, (Ptr{equtree}, Ref{Ptr{Ptr{equnode}}}),
+	res = ccall((:equtree_umin, libreshop), Cint, (Ptr{equtree}, Ref{Ref{Ptr{equnode}}}),
 		tree,
 		node)
 	res != 0 && error("return code $res from ReSHOP")
@@ -668,7 +668,7 @@ end
 
 function reshop_get_treedata(ctx, eidx::Int)
 	tree = ccall((:myo_getequtree, libreshop), Ptr{equtree}, (Ptr{context}, Cint), ctx, eidx)
-	node = Ref{Ptr{Ptr{equnode}}}(C_NULL)
+	node = Ref{Ref{Ptr{equnode}}}(C_NULL)
 	res = equtree_get_root_addr(tree, node)
 	res != 0 && error("return code $res from ReSHOP")
 	return (tree, node)

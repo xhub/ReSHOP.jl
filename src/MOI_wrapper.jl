@@ -102,7 +102,6 @@ function helper_options(ctx, options)
 end
 
 function Optimizer(;options...)
-    reshop_set_printops(stdout)
     # Create ReSHOP context.
     ctx = ctx_alloc()
 
@@ -217,7 +216,7 @@ function MOI.optimize!(model::Optimizer)
       error("Unsupported solver stack $solver_stack")
     end
 
-    # Calling from emp, we already have a mdl object
+    # Calling from EMP, we already have a mdl object
     if model.mdl == C_NULL
         model.mdl = reshop_alloc(model.ctx)
     end
@@ -235,10 +234,10 @@ function MOI.empty!(model::Optimizer)
     reshop_free(model.mdl_solver)
     model.mdl_solver = C_NULL
     # The next free created issues with EMP
-#    reshop_free(model.mdl)
-#    model.mdl = C_NULL
+    reshop_free(model.mdl)
+    model.mdl = C_NULL
 
-    if model.ctx != nothing
+    if model.ctx !== nothing
         ctx_dealloc(model.ctx)
         model.ctx = ctx_alloc()
         helper_options(model.ctx, model.rhp_options)
