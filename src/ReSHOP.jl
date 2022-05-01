@@ -31,10 +31,10 @@ include("reshop_utils.jl")
 global_solverstack = "RESHOP"
 solverstacks = ["RESHOP"]
 reshop_valid_index_max = Csize_t(0)
+reshop_is_init = false
 
 # This is will be called immediately after the module is loaded
 function __init__()
-    reshop_set_printops(stdout)
     global reshop_valid_index_max = ccall((:rhp_getidxmax, libreshop), Csize_t, (),)
 
     gamscntr_template_file = joinpath(solverdata_dir, "gamscntr.dat")

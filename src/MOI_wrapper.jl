@@ -102,6 +102,11 @@ function helper_options(ctx, options)
 end
 
 function Optimizer(;options...)
+    if !reshop_is_init
+      reshop_set_printops(stdout)
+      global reshop_is_init = true
+    end
+
     # Create ReSHOP context.
     ctx = ctx_alloc()
 
