@@ -3,72 +3,12 @@
 # This comes from Knitro
 
 
-# Default configuration.
-const config = MOIT.TestConfig(atol=1e-5, rtol=1e-8,
-                               optimal_status=MOI.OPTIMAL,
-                               query=false,
-                               infeas_certificates=false, # Do not ask for infeasibility certificates.
-                               modify_lhs=false)
-
-const config_local = MOIT.TestConfig(atol=1e-5, rtol=1e-8,
-                                     optimal_status=MOI.LOCALLY_SOLVED,
-                                     query=false,
-                                     duals=false, # well presolve give the solution, hence no duals ...
-                                     infeas_certificates=false, # Do not ask for infeasibility certificates.
-                                     modify_lhs=false)
-
-const config_noduals = MOIT.TestConfig(atol=1e-5, rtol=1e-8,
-                                       optimal_status=MOI.OPTIMAL,
-                                       query=false,
-                                       duals=false,
-                                       infeas_certificates=false,
-                                       modify_lhs=false)
-
-configs = Dict(
-               "local" => config_local,
-               "nodual" => config_noduals
-              )
-
-optimizer_kw = Dict(:rtol => 1e-9)
-
-const OPTIMIZER = ReSHOP.Optimizer(; optimizer_kw...)
-
 # MOIT.nlptest does not support :ExprGraph
 #@testset "MOI NLP tests" begin
 #    @testset "with $nlp_solver" for nlp_solver in nlp_solvers
 #        MOIT.nlptest(ReSHOP.Optimizer(solver=nlp_solver; optimizer_kw...), get(config_solver, nlp_solver, config))
 #    end
 #end
-
-@testset "MOI utils" begin
-    @testset "SolverName" begin
-        optimizer = ReSHOP.Optimizer()
-        @test MOI.get(optimizer, MOI.SolverName()) == "ReSHOP"
-    end
-    @testset "supports_default_copy_to" begin
-        optimizer = ReSHOP.Optimizer()
-        @test MOIU.supports_default_copy_to(optimizer, false)
-        # Use `@test !...` if names are not supported
-        @test MOIU.supports_default_copy_to(optimizer, true)
-    end
-    @testset "MOI.Silent" begin
-        optimizer = ReSHOP.Optimizer()
-        @test MOI.supports(optimizer, MOI.Silent())
-        MOI.set(optimizer, MOI.Silent(), true)
-        @test MOI.get(optimizer, MOI.Silent()) == true
-        MOI.set(optimizer, MOI.Silent(), false)
-        @test MOI.get(optimizer, MOI.Silent()) == false
-    end
-#    @testset "MOI.TimeLimitSec" begin
-#        optimizer = ReSHOP.Optimizer()
-#        @test MOI.supports(optimizer, MOI.TimeLimitSec())
-#        # TimeLimitSec is set to 1e8 by default in Knitro.
-#        @test MOI.get(optimizer, MOI.TimeLimitSec()) == 1e8
-#        my_time_limit = 10.
-#        MOI.set(optimizer, MOI.TimeLimitSec(), my_time_limit)
-#        @test MOI.get(optimizer, MOI.TimeLimitSec()) == my_time_limit
-#    end
-end
 
 #@testset "MOI Basic constraint test" begin
 #    MOIT.basic_constraint_tests(ReSHOP.Optimizer(), config, get_constraint_function=false, get_constraint_set=false)
