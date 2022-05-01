@@ -12,9 +12,20 @@ function _c_print(data::Ptr{Cvoid}, mode::Cuint, msg::Ptr{Cchar})
     return
 end
 
+function _c_print_stdout(data::Ptr{Cvoid}, mode::Cuint, msg::Ptr{Cchar})
+  print(stdout, unsafe_string(msg))
+  return
+end
+
 function reshop_set_printops(io)
-    _C_PRINT = @cfunction(_c_print, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}))
-    ccall((:reshop_set_printops, libreshop), Cvoid, (Ref{Cvoid}, Ref{Cvoid}), pointer_from_objref(io), _C_PRINT)
-    return
+  _C_PRINT = @cfunction(_c_print, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}))
+  ccall((:reshop_set_printops, libreshop), Cvoid, (Ref{Cvoid}, Ref{Cvoid}), pointer_from_objref(io), _C_PRINT)
+  return
+end
+
+function reshop_set_printops()
+  _C_PRINT = @cfunction(_c_print_stdout, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}))
+  ccall((:reshop_set_printops, libreshop), Cvoid, (Ref{Cvoid}, Ref{Cvoid}), C_NULL, _C_PRINT)
+  return
 end
 

@@ -31,7 +31,7 @@ include("reshop_utils.jl")
 global_solverstack = "RESHOP"
 solverstacks = ["RESHOP"]
 reshop_valid_index_max = Csize_t(0)
-reshop_is_init = false
+printops_is_init = false
 
 # This is will be called immediately after the module is loaded
 function __init__()

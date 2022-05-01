@@ -102,9 +102,10 @@ function helper_options(ctx, options)
 end
 
 function Optimizer(;options...)
-    if !reshop_is_init
-      reshop_set_printops(stdout)
-      global reshop_is_init = true
+#      reshop_set_printops()
+    if !printops_is_init
+      reshop_set_printops()
+      global printops_is_init = true
     end
 
     # Create ReSHOP context.
