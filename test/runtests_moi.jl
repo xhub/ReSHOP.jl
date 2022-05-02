@@ -13,7 +13,7 @@ include("MOI/backend-tests.jl")
 include("MOI/configs.jl")
 
 solverstacks = get_solverstacks()
-for stack in solverstacks
+@testset "Tests with solver backend $stack" for stack in solverstacks
   set_solverstack(stack)
   include("MOI/solvers-$stack.jl")
   include("MOI/wrapper.jl")

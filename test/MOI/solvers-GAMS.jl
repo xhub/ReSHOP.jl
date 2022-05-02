@@ -22,9 +22,9 @@ if Sys.islinux() || Sys.iswindows()
     push!(lp_solvers, "xa")
 end
 
-quad_solvers = [("conopt", "local"),
+quad_solvers = [("conopt", "local_nodual"),
 #                ("cplex", "nodual"),
-                ("minos", "local"),
+                ("minos", "local_nodual"),
                 ("pathnlp", "local"),
                 ("mosek", ""),
                 ("xpress", "")]

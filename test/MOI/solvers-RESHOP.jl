@@ -28,4 +28,7 @@ push!(convex_nlp_solvers, "path")
 
 append!(convex_nlp_solvers, nlp_solvers)
 
+config_solver = Dict()
+config_solver_noduals = Dict()
+
 #push!(minlp_solvers, "")
