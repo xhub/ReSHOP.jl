@@ -37,7 +37,7 @@ function reshop_setup_gams()
     end
 
     # we need an empty Matrixfile
-    touch(joinpath(cur_dir, "gamsmatr.dat"))
+    #touch(joinpath(cur_dir, "gamsmatr.dat"))
 
     res = ccall((:gams_setgamscntr, libreshop), Cint, (Ptr{context}, Cstring), ctx, joinpath(cur_dir, "gamscntr.dat"))
     res != 0 && error("return code $res from ReSHOP")

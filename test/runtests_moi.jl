@@ -12,6 +12,7 @@ include("MOI/backend-tests.jl")
 # Load configs only once
 include("MOI/configs.jl")
 
+@testset "Solving optimization problems" begin
 solverstacks = get_solverstacks()
 @testset "Tests with solver backend $stack" for stack in solverstacks
   set_solverstack(stack)
@@ -32,4 +33,6 @@ solverstacks = get_solverstacks()
       include("MOI/wrapper.jl")
     end
   end
+end
+
 end

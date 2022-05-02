@@ -46,13 +46,16 @@ function __init__()
         res != 0 && error("return code $res from ReSHOP")
 
         ENV["PATH"] *= ":" * gamsdir
-    
+
         # This is needed to prevent the listing of the Process directory
         ENV["DEBUG_PGAMS"] = '0'
 
         global global_solverstack = "GAMS"
         push!(solverstacks, "GAMS")
     end
+
+   # ccall((:rhp_show_refcnttrace, libreshop), Cvoid, (Cuchar,), 1)
+   # ccall((:rhp_show_stackinfo, libreshop), Cvoid, (Cuchar,), 1)
 
     # This comes from https://github.com/chkwon/PATHSolver.jl
     platform = if Sys.iswindows()
