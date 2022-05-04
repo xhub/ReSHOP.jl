@@ -4,7 +4,7 @@ license = "MIT"
 desc = "Reformulation Solver for Hierarchical Optimization Problems"
 repo = "https://github.com/xhub/ReSHOP.jl.git"
 authors = ["Olivier Huber <oli.huber@gmail.com>"]
-version = "0.1.6"
+version = "0.1.7"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
@@ -24,7 +24,7 @@ MathOptInterface = "^0.9"
 MathProgBase = "^0.7.7"
 JuMP = "0.18, 0.19, 0.20, 0.21"
 DataDeps = "0.7"
-ReSHOP_jll = "= 0.1.5"
+ReSHOP_jll = "= 0.1.6"
 
 [extras]
 MINLPTests = "ee0a3090-8ee9-5cdb-b8cb-8eeba3165522"
